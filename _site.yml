@@ -1,4 +1,4 @@
-name: "cars"
+name: "risksharing"
 output_dir: "docs"
 navbar:
   title: "Risk Sharing"
@@ -7,6 +7,8 @@ navbar:
     href: index.html
   - text: "Ligon et al. (2002)"
     href: LTW_code.html
+  - text: "Thomas and Worrall (1988)"
+    href: TW88_code.html
 output:
   html_document:
     theme: cosmo
