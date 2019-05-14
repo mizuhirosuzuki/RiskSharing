@@ -1,11 +1,11 @@
 name: "cars"
 output_dir: "docs"
 navbar:
-  title: "Cars"
+  title: "Risk Sharing"
   left:
   - text: "Home"
     href: index.html
-  - text: "Speed and Distance"
+  - text: "Ligon et al. (2002)"
     href: LTW_code.html
 output:
   html_document:
