@@ -5,6 +5,8 @@ navbar:
   left:
   - text: "Home"
     href: index.html
+  - text: "Literature"
+    href: RiskSharingLit.html
   - text: "Ligon et al. (2002)"
     href: LTW_code.html
   - text: "Thomas and Worrall (1988)"

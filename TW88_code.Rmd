@@ -2,9 +2,6 @@
 title: "Replication of Thomas & Worrall (1988), Figure 1"
 author: "Mizuhiro Suzuki"
 date: "5/10/2018"
-output:
-  pdf_document: default
-  html_document: default
 ---
 
 ```{r setup, include=FALSE}

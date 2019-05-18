@@ -1,0 +1,27 @@
+---
+title: "Literature of Risk Sharing"
+author: "Mizuhiro Suzuki"
+date: "5/18/2019"
+bibliography: risksharing.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(nleqslv)
+library(ggplot2)
+library(ggrepel)
+library(shiny)
+library(shinythemes)
+```
+
+## Literature of Risk Sharing
+
+In this document I introduce studies related to risk sharing.
+
+Is the Extended Family Altruistically Linked? Direct Tests Using Micro Data: Joseph G. Altonji, Fumio Hayashi and Laurence J. Kotlikoff
+[@Townsend1994]
+
+
+
+# References
