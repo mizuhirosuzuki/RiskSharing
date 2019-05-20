@@ -19,8 +19,9 @@ library(shinythemes)
 
 In this document I introduce studies related to risk sharing.
 
-Is the Extended Family Altruistically Linked? Direct Tests Using Micro Data: Joseph G. Altonji, Fumio Hayashi and Laurence J. Kotlikoff
-[@Townsend1994]
+[@Altonji1992]: 
+
+[@Townsend1994]: 
 
 
 
