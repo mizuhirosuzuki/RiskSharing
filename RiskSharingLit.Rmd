@@ -19,9 +19,9 @@ library(shinythemes)
 
 In this document I introduce studies related to risk sharing.
 
-See @Altonji1992: 
+[@Altonji1992]: 
 
-See @Townsend1994: 
+[@Townsend1994]: 
 
 
 
