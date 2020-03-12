@@ -17,12 +17,92 @@ library(shinythemes)
 
 ## Literature of Risk Sharing
 
-In this document I introduce studies related to risk sharing.
+In this document I introduce studies related to risk-sharing.
+Here, by risk-sharing, I consider studies trying to understand the relationships between consumption and income and mechanisms to reduce the correlation through sharing income risks with others.
+The seminal paper in this literature is @Townsend1994, and I introduce studies before and after this paper and try to relate each other.
 
-[@Altonji1992]: 
+### @Townsend1994 paper as a canonical full risk-sharing model
 
-[@Townsend1994]: 
+### Full risk-sharing model as in @Townsend1994
 
+@Mace1991: 
+
+@Cochrane1991:
+
+@Altonji1992: 
+
+#### Risk-sharing under heterogeneity
+
+@Kurosaki2001:
+
+@Mazzocco2012:
+
+@Chiappori2014:
+
+### Failure of full risk-sharing: why?
+
+#### Static limited commitment model
+
+@Kimball1988:
+
+@Coate1993:
+
+#### Dynamic limited commitment model
+
+@Kocherlakota1996:
+
+@Fafchamps1999:
+
+@Attanasio2000: 
+
+@Ligon2002:
+
+
+##### Applications of dynamic limited commitment model 
+
+@Albarran2003: 
+
+@Krueger2006: In the U.S.
+
+@Mazzocco2007: Intra-household decision makings
+
+@Voena2015: Intra-household decision makings
+
+@Kehoe2002: International business cycles
+
+#### Hidden income model
+
+#### Moral hazard model
+
+@Abraham2008:
+
+@Belhaj2012:
+
+@Belhaj2014:
+
+### Something $\times$ something
+
+@Cole2001: Hidden income $\times$ storage
+
+@Laczo2015: Dynamic limited commitment $\times$ preference heterogeneity
+
+@Ligon2000: Dynamic limited commitment $\times$ (private) storage
+
+@Abraham2018: Dynamic limited commitment $\times$ (both private and public) storage
+
+### Formation of risk-sharing networks
+
+### Risk-sharing with explicit networks
+
+@Ambrus2014:
+
+### Others (pending)
+
+@Fafchamps1992:
+
+@Dizon2019: 
+
+## Key empirical findings so far
 
 
 # References
