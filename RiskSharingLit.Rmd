@@ -19,7 +19,10 @@ library(shinythemes)
 
 In this document I introduce studies related to risk sharing.
 
-Test
+See @Altonji1992: 
+
+See @Townsend1994: 
+
 
 
 # References
