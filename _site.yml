@@ -7,6 +7,8 @@ navbar:
     href: index.html
   - text: "Literature"
     href: RiskSharingLit.html
+  - text: "Coate and Ravallion (1993)"
+    href: CR93_code.html
   - text: "Ligon et al. (2002)"
     href: LTW_code.html
   - text: "Thomas and Worrall (1988)"
