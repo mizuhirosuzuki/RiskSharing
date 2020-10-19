@@ -1,0 +1,181 @@
+---
+title: "Dynamic limited commitment model in Laczó (2015)"
+author: "Mizuhiro Suzuki"
+date: "10/18/2020"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+packages <- c(
+  "tidyverse",
+  "knitr",
+  "nleqslv",
+  "ggrepel",
+  "rootSolve",
+  "BB",
+  "pracma"
+)
+
+pacman::p_load(packages, character.only = TRUE)
+
+#knit: (function(input_file, encoding) {
+#  out_dir <- 'docs';
+#  rmarkdown::render(input = input_file,
+#                   output_format = "html_document",
+#                   encoding = encoding,
+#                   output_dir = out_dir,
+#                   output_file = 'index.html')})
+#output: github_document
+```
+
+```{r}
+
+# (Number of grid points on relative Pareeto weight) - 1
+g <- 199
+
+```
+
+
+```{r}
+
+# income shocks and their transition probabilities of the household
+inc_hh <- c(2/3, 4/3)
+P_hh <- matrix(rep(c(0.1, 0.9), 2), nrow = 2, byrow = TRUE)
+
+# income shocks and their transition probabilities of the village
+inc_vil <- c(2/3, 4/3)
+P_vil <- matrix(rep(c(0.2, 0.8), 2), nrow = 2, byrow = TRUE)
+
+# transitiono super-matrix of income shocks
+R <- kronecker(P_hh, P_vil)
+
+# number of states
+# (number of income states for a household times
+# number of income states for the village)
+S <- 2 * 2
+
+s01 <- matrix(nrow = S, ncol = 1)
+s01[, 1] <- inc_hh
+s01[, 1] <- sort(s01[, 1])
+s02 <- matrix(nrow = S, ncol = 1)
+s02[, 1] <- inc_vil
+
+# Income matrix
+# (col 1: HH income, col 2: village income)
+
+inc_mat <- as.matrix(expand.grid(inc_hh, inc_vil))
+
+# Aggregate income in each state
+inc_ag <- rowSums(inc_mat)
+
+```
+
+
+```{r}
+
+# Define utility function
+util <- function(c, sigma) {
+  if (sigma != 1) {
+    output = (c ^ (1 - sigma) - 1) / (1 - sigma)
+  } else {
+    output = log(c)
+  }
+  return(output)
+}
+util_prime <- function(c, sigma) c ^ (- sigma)
+  
+
+# Limit points of feasible relative Pareto weights
+x_int_all <- matrix(nrow = S, ncol = 2)
+
+delta <- 0.8 # time discount factor 
+sigma <- 0.4 # coefficient of relative risk aversion
+pcphi <- 0.1 # punishment under autarky
+
+# Expected utility under autarky for HH
+U_hh_aut <- numeric(length = 2)
+i <- 1
+diff <- 1
+while (diff > 1e-4) {
+  U_hh_aut_new <- util((inc_hh * (1 - pcphi)), sigma) + delta * P_hh %*% U_hh_aut
+  diff <- max(abs(U_hh_aut_new - U_hh_aut))
+  U_hh_aut <- U_hh_aut_new
+}
+U_hh_aut
+
+# Expected utility under autarky for village
+U_vil_aut <- numeric(length = 2)
+i <- 1
+diff <- 1
+while (diff > 1e-4) {
+  U_vil_aut_new <- util((inc_vil * (1 - pcphi)), sigma) + delta * P_vil %*% U_vil_aut
+  diff <- max(abs(U_vil_aut_new - U_vil_aut))
+  U_vil_aut <- U_vil_aut_new
+}
+U_vil_aut
+
+# Matrix of expected utilities of autarky
+# (col 1: HH, col 2: village)
+Uaut <- expand.grid(U_hh_aut, U_vil_aut)
+
+
+```
+
+```{r}
+# The grid points of relative Pareto weights
+qmin <- util_prime(max(inc_vil), sigma) / util_prime(min(inc_hh * (1 - pcphi)), sigma)
+qmax <- util_prime(min(inc_vil * (1 - pcphi)), sigma) / util_prime(max(inc_hh), sigma)
+q <- exp(seq(log(qmin), log(qmax), length.out = (g + 1)))
+
+```
+
+
+```{r}
+
+# Matrix of relative Pareto weights with which participation constraints are satisfied
+# with equality
+# (dim 1: income state, dim 2: relative Pareto weight)
+
+x <- matrix(q, nrow = S, ncol = (g + 1), byrow = TRUE)
+
+# The grid points of consumption of HH
+# Consumption is determined by aggregate income (inc_ag) and
+# relative Pareto weights (q)
+
+cons_hh <- matrix(nrow = S, ncol = (g + 1))
+for (k in 1:S) {
+  for (l in 1:(g + 1)) {
+    cons_hh[k, l] <- inc_ag[k] / (1 + q[l] ^ (- 1 / sigma))
+  }
+}
+
+```
+
+```{r}
+
+# Perfect risk sharing ==============
+
+# Obtain value functions by value function iterations
+
+# initial guess, expected utilities under autarky
+V_hh <- outer(Uaut[, 1], rep(1, (g + 1)))
+V_vil <- outer(Uaut[, 2], rep(1, (g + 1)))
+V_hh_new <- matrix(nrow = S, ncol = (g + 1))
+V_vil_new <- matrix(nrow = S, ncol = (g + 1))
+
+
+j <- 1
+diff <- 1
+while (diff > 1e-8 & j < 500) {
+  for (i in 1:(g + 1)) {
+    V_hh_new[, i] <- util(cons_hh[, i], sigma) + delta * R %*% V_hh[, i]
+    V_vil_new[, i] <- util(inc_ag - cons_hh[, i], sigma) + delta * R %*% V_vil[, i]
+  }
+  diff <- max(max(abs(V_hh_new - V_hh)), max(abs(V_vil_new - V_vil)))
+  V_hh <- V_hh_new
+  V_vil <- V_vil_new
+  j <- j + 1
+}
+
+```
+

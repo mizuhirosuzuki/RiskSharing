@@ -24,6 +24,15 @@
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+      </style>
+
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css">
   pre:not([class]) {
@@ -1002,7 +1011,7 @@ kable(table_2, digits = 3, caption = &quot;Moderately covariate income streams&q
 <h2>Replication of Table 3: The “highly non-covariate” income stream</h2>
 <pre class="r"><code>table_3 &lt;- matrix(rep(0, (5 + 6 + 8) * 6), ncol = 6)
 
-pi &lt;- matrix(c(0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 0.1, 0.1), nrow = 3) 
+pi &lt;- matrix(c(0.1, 0.1, 0.15, 0.1, 0.1, 0.1, 0.15, 0.1, 0.1), nrow = 3) 
 r_vals &lt;- c(0.05, 0.15, 0.25)
 rho_vals &lt;- c(0.1, 0.3, 0.5, 0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1, 2.3, 2.5, 2.7)
 
@@ -1121,18 +1130,18 @@ kable(table_3, digits = 3, caption = &quot;Highly non-covariate income streams&q
 <tr class="even">
 <td align="right">0.05</td>
 <td align="right">0.3</td>
-<td align="right">0.365</td>
-<td align="right">0.415</td>
-<td align="right">0.415</td>
-<td align="right">0.766</td>
+<td align="right">0.500</td>
+<td align="right">0.648</td>
+<td align="right">0.500</td>
+<td align="right">0.914</td>
 </tr>
 <tr class="odd">
 <td align="right">0.05</td>
 <td align="right">0.5</td>
 <td align="right">0.500</td>
-<td align="right">0.934</td>
+<td align="right">1.000</td>
 <td align="right">0.500</td>
-<td align="right">0.997</td>
+<td align="right">1.000</td>
 </tr>
 <tr class="even">
 <td align="right">0.05</td>
@@ -1169,34 +1178,34 @@ kable(table_3, digits = 3, caption = &quot;Highly non-covariate income streams&q
 <tr class="even">
 <td align="right">0.15</td>
 <td align="right">0.5</td>
-<td align="right">0.000</td>
-<td align="right">0.000</td>
-<td align="right">0.000</td>
-<td align="right">0.000</td>
+<td align="right">0.131</td>
+<td align="right">0.161</td>
+<td align="right">0.161</td>
+<td align="right">0.360</td>
 </tr>
 <tr class="odd">
 <td align="right">0.15</td>
 <td align="right">0.7</td>
-<td align="right">0.253</td>
-<td align="right">0.338</td>
-<td align="right">0.338</td>
-<td align="right">0.663</td>
+<td align="right">0.425</td>
+<td align="right">0.570</td>
+<td align="right">0.500</td>
+<td align="right">0.872</td>
 </tr>
 <tr class="even">
 <td align="right">0.15</td>
 <td align="right">0.9</td>
-<td align="right">0.434</td>
-<td align="right">0.628</td>
-<td align="right">0.500</td>
-<td align="right">0.916</td>
-</tr>
-<tr class="odd">
-<td align="right">0.15</td>
-<td align="right">1.1</td>
 <td align="right">0.500</td>
 <td align="right">0.857</td>
 <td align="right">0.500</td>
-<td align="right">0.989</td>
+<td align="right">0.987</td>
+</tr>
+<tr class="odd">
+<td align="right">0.15</td>
+<td align="right">1.1</td>
+<td align="right">0.500</td>
+<td align="right">1.000</td>
+<td align="right">0.500</td>
+<td align="right">1.000</td>
 </tr>
 <tr class="even">
 <td align="right">0.25</td>
@@ -1225,42 +1234,42 @@ kable(table_3, digits = 3, caption = &quot;Highly non-covariate income streams&q
 <tr class="odd">
 <td align="right">0.25</td>
 <td align="right">0.7</td>
-<td align="right">0.000</td>
-<td align="right">0.000</td>
-<td align="right">0.000</td>
-<td align="right">0.000</td>
+<td align="right">0.058</td>
+<td align="right">0.077</td>
+<td align="right">0.077</td>
+<td align="right">0.184</td>
 </tr>
 <tr class="even">
 <td align="right">0.25</td>
 <td align="right">0.9</td>
-<td align="right">0.122</td>
-<td align="right">0.176</td>
-<td align="right">0.176</td>
-<td align="right">0.397</td>
+<td align="right">0.287</td>
+<td align="right">0.415</td>
+<td align="right">0.415</td>
+<td align="right">0.734</td>
 </tr>
 <tr class="odd">
 <td align="right">0.25</td>
 <td align="right">1.1</td>
-<td align="right">0.282</td>
-<td align="right">0.440</td>
-<td align="right">0.440</td>
-<td align="right">0.769</td>
+<td align="right">0.428</td>
+<td align="right">0.665</td>
+<td align="right">0.500</td>
+<td align="right">0.924</td>
 </tr>
 <tr class="even">
 <td align="right">0.25</td>
 <td align="right">1.3</td>
-<td align="right">0.390</td>
-<td align="right">0.649</td>
 <td align="right">0.500</td>
-<td align="right">0.920</td>
+<td align="right">0.866</td>
+<td align="right">0.500</td>
+<td align="right">0.989</td>
 </tr>
 <tr class="odd">
 <td align="right">0.25</td>
 <td align="right">1.5</td>
-<td align="right">0.469</td>
-<td align="right">0.827</td>
 <td align="right">0.500</td>
-<td align="right">0.983</td>
+<td align="right">1.000</td>
+<td align="right">0.500</td>
+<td align="right">1.000</td>
 </tr>
 </tbody>
 </table>

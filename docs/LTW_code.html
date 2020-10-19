@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Mizuhiro Suzuki" />
@@ -23,6 +23,15 @@
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+      </style>
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css">
@@ -70,9 +79,7 @@ h6 {
 </style>
 
 
-</head>
 
-<body>
 
 <style type = "text/css">
 .main-container {
@@ -86,13 +93,18 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
 }
+.html-widget {
+  margin-bottom: 20px;
+}
 button.code-folding-btn:focus {
   outline: none;
+}
+summary {
+  display: list-item;
 }
 </style>
 
@@ -108,7 +120,6 @@ body {
   padding-top: 56px;
   margin-top: -56px;
 }
-
 .section h2 {
   padding-top: 56px;
   margin-top: -56px;
@@ -128,6 +139,43 @@ body {
 .section h6 {
   padding-top: 56px;
   margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
 }
 </style>
 
@@ -149,19 +197,74 @@ $(document).ready(function () {
 });
 </script>
 
-
-<div class="container-fluid main-container">
-
 <!-- tabsets -->
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-</script>
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
 
 <!-- code folding -->
 
 
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
 
 
 
@@ -185,6 +288,9 @@ $(document).ready(function () {
   <a href="RiskSharingLit.html">Literature</a>
 </li>
 <li>
+  <a href="CR93_code.html">Coate and Ravallion (1993)</a>
+</li>
+<li>
   <a href="LTW_code.html">Ligon et al. (2002)</a>
 </li>
 <li>
@@ -203,8 +309,8 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">Replication of Figure 1 in Ligon, Thomas &amp; Worrall (2002)</h1>
-<h4 class="author"><em>Mizuhiro Suzuki</em></h4>
-<h4 class="date"><em>5/9/2018</em></h4>
+<h4 class="author">Mizuhiro Suzuki</h4>
+<h4 class="date">5/9/2018</h4>
 
 </div>
 
@@ -235,7 +341,7 @@ v &lt;- function(c){
   object &lt;- log(c)
   return(object)
 }</code></pre>
-<p>I choose <span class="math inline">\(y_l\)</span> and <span class="math inline">\(y_h\)</span> so that the mean is 1 and <span class="math inline">\(y_l / y_h = 1/2\)</span> as in the original paper. The log utility functions and the equation (11) in the paper tell us the transfer amounts are given as <span class="math inline">\(\lambda\)</span>: <span class="math inline">\(\tau_s = \frac{y_1(s) - y_2(s) \lambda}{1 + \lambda}\)</span>.</p>
+<p>I choose <span class="math inline">\(y_l\)</span> and <span class="math inline">\(y_h\)</span> so that the mean is 1 and <span class="math inline">\(y_l / y_h = 1/2\)</span> as in the original paper. The log utility functions and the equation (11) in the paper tell us the transfer amount as a function of <span class="math inline">\(\lambda\)</span>: <span class="math inline">\(\tau_s = \frac{y_1(s) - y_2(s) \lambda}{1 + \lambda}\)</span>.</p>
 <div id="case-1-autarky-case" class="section level3">
 <h3>Case 1: Autarky case</h3>
 <p>Under autarky, there is no transfer and thus the intervals become degenerate. Therefore, <span class="math inline">\(\lambda_{hh, lower} = \lambda_{hh, upper} = 1\)</span>, <span class="math inline">\(\lambda_{hl, lower} = \lambda_{hl, upper} = 2\)</span>, and <span class="math inline">\(\lambda_{lh, lower} = \lambda_{lh, upper} = 1 / 2\)</span>.</p>
@@ -543,15 +649,15 @@ ggplot() +
   geom_ribbon(aes(x = delta_vals, 
                   ymin = log(lambda_lh_lower_vals),
                   ymax = log(lambda_lh_upper_vals)),
-                  fill = &quot;blue&quot;, alpha = &quot;0.2&quot;) +
+                  fill = &quot;blue&quot;, alpha = 0.2) +
   geom_ribbon(aes(x = delta_vals,
                   ymin = log(lambda_hh_lower_vals),
                   ymax = log(lambda_hh_upper_vals)),
-                  fill = &quot;red&quot;, alpha = &quot;0.2&quot;) +
+                  fill = &quot;red&quot;, alpha = 0.2) +
   geom_ribbon(aes(x = delta_vals,
                   ymin = log(lambda_hl_lower_vals),
                   ymax = log(lambda_hl_upper_vals)),
-                  fill = &quot;green&quot;, alpha = &quot;0.2&quot;) + 
+                  fill = &quot;green&quot;, alpha = 0.2) + 
   scale_color_manual(name = &quot;End-points&quot;, 
                      values = c(&quot;blue&quot;, &quot;purple&quot;, &quot;brown&quot;, &quot;red&quot;, &quot;yellow&quot;, &quot;green&quot;), 
                      labels = c(&quot;lambda_lh_lower&quot;, 
@@ -775,15 +881,15 @@ ggplot() +
                 geom_ribbon(aes(x = delta_vals,
                                 ymin = log(lambda_lh_lower_vals),
                                 ymax = log(lambda_lh_upper_vals)),
-                                fill = &quot;blue&quot;, alpha = &quot;0.2&quot;) +
+                                fill = &quot;blue&quot;, alpha = 0.2) +
                 geom_ribbon(aes(x = delta_vals,
                                 ymin = log(lambda_hh_lower_vals),
                                 ymax = log(lambda_hh_upper_vals)),
-                                fill = &quot;red&quot;, alpha = &quot;0.2&quot;) +
+                                fill = &quot;red&quot;, alpha = 0.2) +
                 geom_ribbon(aes(x = delta_vals,
                                 ymin = log(lambda_hl_lower_vals),
                                 ymax = log(lambda_hl_upper_vals)),
-                                fill = &quot;green&quot;, alpha = &quot;0.2&quot;) + 
+                                fill = &quot;green&quot;, alpha = 0.2) + 
                 geom_vline(xintercept = delta, color = &quot;black&quot;, size = 0.8, alpha = 0.6) +
                 scale_color_manual(name = &quot;End-points&quot;,
                                    values = c(&quot;blue&quot;, &quot;purple&quot;, &quot;brown&quot;, &quot;red&quot;, &quot;yellow&quot;, &quot;green&quot;), 
@@ -831,7 +937,7 @@ ggplot() +
                                &quot;Income (2)&quot;)
   return(list(plot_test, result_table, summary_table))
 }</code></pre>
-
+<div style="page-break-after: always;"></div>
 <div id="autarky-region" class="section level3">
 <h3>Autarky region</h3>
 <p>First, let me try the autarky region.</p>
@@ -853,6 +959,14 @@ Autarky region
 <tr>
 <td>
 <table>
+<colgroup>
+<col width="8%" />
+<col width="12%" />
+<col width="16%" />
+<col width="25%" />
+<col width="18%" />
+<col width="18%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Period</th>
@@ -984,6 +1098,14 @@ Non-overlapping region
 <tr>
 <td>
 <table>
+<colgroup>
+<col width="8%" />
+<col width="12%" />
+<col width="16%" />
+<col width="25%" />
+<col width="18%" />
+<col width="18%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Period</th>
@@ -1104,29 +1226,29 @@ Non-overlapping region (summary statistics)
 <table>
 <thead>
 <tr class="header">
-<th></th>
+<th align="left"></th>
 <th align="right">Mean</th>
 <th align="right">Std</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Consumption (1)</td>
+<td align="left">Consumption (1)</td>
 <td align="right">1.262</td>
 <td align="right">0.173</td>
 </tr>
 <tr class="even">
-<td>Consumption (2)</td>
+<td align="left">Consumption (2)</td>
 <td align="right">1.205</td>
 <td align="right">0.215</td>
 </tr>
 <tr class="odd">
-<td>Income (1)</td>
+<td align="left">Income (1)</td>
 <td align="right">1.267</td>
 <td align="right">0.211</td>
 </tr>
 <tr class="even">
-<td>Income (2)</td>
+<td align="left">Income (2)</td>
 <td align="right">1.200</td>
 <td align="right">0.281</td>
 </tr>
@@ -1159,6 +1281,14 @@ Overlapping region
 <tr>
 <td>
 <table>
+<colgroup>
+<col width="8%" />
+<col width="12%" />
+<col width="16%" />
+<col width="25%" />
+<col width="18%" />
+<col width="18%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Period</th>
@@ -1279,29 +1409,29 @@ Overlapping region (summary statistics)
 <table>
 <thead>
 <tr class="header">
-<th></th>
+<th align="left"></th>
 <th align="right">Mean</th>
 <th align="right">Std</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Consumption (1)</td>
+<td align="left">Consumption (1)</td>
 <td align="right">1.246</td>
 <td align="right">0.166</td>
 </tr>
 <tr class="even">
-<td>Consumption (2)</td>
+<td align="left">Consumption (2)</td>
 <td align="right">1.221</td>
 <td align="right">0.158</td>
 </tr>
 <tr class="odd">
-<td>Income (1)</td>
+<td align="left">Income (1)</td>
 <td align="right">1.267</td>
 <td align="right">0.211</td>
 </tr>
 <tr class="even">
-<td>Income (2)</td>
+<td align="left">Income (2)</td>
 <td align="right">1.200</td>
 <td align="right">0.281</td>
 </tr>
@@ -1333,6 +1463,14 @@ First-best region
 <tr>
 <td>
 <table>
+<colgroup>
+<col width="8%" />
+<col width="12%" />
+<col width="16%" />
+<col width="25%" />
+<col width="18%" />
+<col width="18%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Period</th>
@@ -1453,29 +1591,29 @@ First-best region (summary statistics)
 <table>
 <thead>
 <tr class="header">
-<th></th>
+<th align="left"></th>
 <th align="right">Mean</th>
 <th align="right">Std</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Consumption (1)</td>
+<td align="left">Consumption (1)</td>
 <td align="right">1.233</td>
 <td align="right">0.161</td>
 </tr>
 <tr class="even">
-<td>Consumption (2)</td>
+<td align="left">Consumption (2)</td>
 <td align="right">1.233</td>
 <td align="right">0.161</td>
 </tr>
 <tr class="odd">
-<td>Income (1)</td>
+<td align="left">Income (1)</td>
 <td align="right">1.267</td>
 <td align="right">0.211</td>
 </tr>
 <tr class="even">
-<td>Income (2)</td>
+<td align="left">Income (2)</td>
 <td align="right">1.200</td>
 <td align="right">0.281</td>
 </tr>
@@ -1782,15 +1920,15 @@ ggplot() +
   geom_ribbon(aes(x = delta_vals,
                   ymin = log(lambda_lh_lower_vals_slc),
                   ymax = log(lambda_lh_upper_vals_slc)),
-                  fill = &quot;blue&quot;, alpha = &quot;0.2&quot;) +
+                  fill = &quot;blue&quot;, alpha = 0.2) +
   geom_ribbon(aes(x = delta_vals,
                   ymin = log(lambda_hh_lower_vals_slc),
                   ymax = log(lambda_hh_upper_vals_slc)),
-                  fill = &quot;red&quot;, alpha = &quot;0.2&quot;) +
+                  fill = &quot;red&quot;, alpha = 0.2) +
   geom_ribbon(aes(x = delta_vals,
                   ymin = log(lambda_hl_lower_vals_slc),
                   ymax = log(lambda_hl_upper_vals_slc)),
-                  fill = &quot;green&quot;, alpha = &quot;0.2&quot;) + 
+                  fill = &quot;green&quot;, alpha = 0.2) + 
   scale_color_manual(name = &quot;End-points&quot;, values = c(&quot;blue&quot;,
                                                      &quot;purple&quot;,
                                                      &quot;brown&quot;,
@@ -2012,15 +2150,15 @@ ggplot() +
                 geom_ribbon(aes(x = delta_vals, 
                                 ymin = log(lambda_lh_lower_vals_slc), 
                                 ymax = log(lambda_lh_upper_vals_slc)),
-                                fill = &quot;blue&quot;, alpha = &quot;0.2&quot;) +
+                                fill = &quot;blue&quot;, alpha = 0.2) +
                 geom_ribbon(aes(x = delta_vals, 
                                 ymin = log(lambda_hh_lower_vals_slc), 
                                 ymax = log(lambda_hh_upper_vals_slc)),
-                                fill = &quot;red&quot;, alpha = &quot;0.2&quot;) +
+                                fill = &quot;red&quot;, alpha = 0.2) +
                 geom_ribbon(aes(x = delta_vals, 
                                 ymin = log(lambda_hl_lower_vals_slc), 
                                 ymax = log(lambda_hl_upper_vals_slc)),
-                                fill = &quot;green&quot;, alpha = &quot;0.2&quot;) + 
+                                fill = &quot;green&quot;, alpha = 0.2) + 
                 geom_vline(xintercept = delta, 
                            color = &quot;black&quot;, 
                            size = 0.8, 
@@ -2091,6 +2229,14 @@ Static limited commitment model
 <tr>
 <td>
 <table>
+<colgroup>
+<col width="8%" />
+<col width="12%" />
+<col width="16%" />
+<col width="25%" />
+<col width="18%" />
+<col width="18%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Period</th>
@@ -2209,6 +2355,14 @@ Dynamic limited commitment model
 <tr>
 <td>
 <table>
+<colgroup>
+<col width="8%" />
+<col width="12%" />
+<col width="16%" />
+<col width="25%" />
+<col width="18%" />
+<col width="18%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Period</th>
@@ -2328,7 +2482,7 @@ kable(summary_table_both, caption = &quot;Summary statistics&quot;)</code></pre>
 <caption>Summary statistics</caption>
 <thead>
 <tr class="header">
-<th></th>
+<th align="left"></th>
 <th align="right">Mean (dynamic)</th>
 <th align="right">Std (dynamic)</th>
 <th align="right">Mean (static)</th>
@@ -2337,28 +2491,28 @@ kable(summary_table_both, caption = &quot;Summary statistics&quot;)</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Consumption (1)</td>
+<td align="left">Consumption (1)</td>
 <td align="right">1.257</td>
 <td align="right">0.165</td>
 <td align="right">1.262</td>
 <td align="right">0.194</td>
 </tr>
 <tr class="even">
-<td>Consumption (2)</td>
+<td align="left">Consumption (2)</td>
 <td align="right">1.210</td>
 <td align="right">0.170</td>
 <td align="right">1.205</td>
 <td align="right">0.260</td>
 </tr>
 <tr class="odd">
-<td>Income (1)</td>
+<td align="left">Income (1)</td>
 <td align="right">1.267</td>
 <td align="right">0.211</td>
 <td align="right">1.267</td>
 <td align="right">0.211</td>
 </tr>
 <tr class="even">
-<td>Income (2)</td>
+<td align="left">Income (2)</td>
 <td align="right">1.200</td>
 <td align="right">0.281</td>
 <td align="right">1.200</td>
@@ -2387,6 +2541,23 @@ $(document).ready(function () {
 
 
 </script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>

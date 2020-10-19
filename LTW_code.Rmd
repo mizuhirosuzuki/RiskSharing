@@ -6,15 +6,19 @@ date: "5/9/2018"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(knitr)
-library(nleqslv)
-library(ggplot2)
-library(ggrepel)
-library(shiny)
-library(shinythemes)
-library(rootSolve)
-library(BB)
-library(pracma)
+packages <- c(
+  "knitr",
+  "nleqslv",
+  "ggplot2",
+  "ggrepel",
+  "shiny",
+  "shinythemes",
+  "rootSolve",
+  "BB",
+  "pracma"
+)
+
+pacman::p_load(packages, character.only = TRUE)
 
 #knit: (function(input_file, encoding) {
 #  out_dir <- 'docs';
@@ -61,7 +65,7 @@ v <- function(c){
 ```
 
 I choose $y_l$ and $y_h$ so that the mean is 1 and $y_l / y_h = 1/2$ as in the original paper.
-The log utility functions and the equation (11) in the paper tell us the transfer amounts are given as $\lambda$: $\tau_s = \frac{y_1(s) - y_2(s) \lambda}{1 + \lambda}$.
+The log utility functions and the equation (11) in the paper tell us the transfer amount as a function of $\lambda$: $\tau_s = \frac{y_1(s) - y_2(s) \lambda}{1 + \lambda}$.
 
 ### Case 1: Autarky case
 
@@ -554,15 +558,15 @@ ggplot() +
   geom_ribbon(aes(x = delta_vals, 
                   ymin = log(lambda_lh_lower_vals),
                   ymax = log(lambda_lh_upper_vals)),
-                  fill = "blue", alpha = "0.2") +
+                  fill = "blue", alpha = 0.2) +
   geom_ribbon(aes(x = delta_vals,
                   ymin = log(lambda_hh_lower_vals),
                   ymax = log(lambda_hh_upper_vals)),
-                  fill = "red", alpha = "0.2") +
+                  fill = "red", alpha = 0.2) +
   geom_ribbon(aes(x = delta_vals,
                   ymin = log(lambda_hl_lower_vals),
                   ymax = log(lambda_hl_upper_vals)),
-                  fill = "green", alpha = "0.2") + 
+                  fill = "green", alpha = 0.2) + 
   scale_color_manual(name = "End-points", 
                      values = c("blue", "purple", "brown", "red", "yellow", "green"), 
                      labels = c("lambda_lh_lower", 
@@ -792,15 +796,15 @@ lambda_change_plot <- function(lambda_init, delta, n){
                 geom_ribbon(aes(x = delta_vals,
                                 ymin = log(lambda_lh_lower_vals),
                                 ymax = log(lambda_lh_upper_vals)),
-                                fill = "blue", alpha = "0.2") +
+                                fill = "blue", alpha = 0.2) +
                 geom_ribbon(aes(x = delta_vals,
                                 ymin = log(lambda_hh_lower_vals),
                                 ymax = log(lambda_hh_upper_vals)),
-                                fill = "red", alpha = "0.2") +
+                                fill = "red", alpha = 0.2) +
                 geom_ribbon(aes(x = delta_vals,
                                 ymin = log(lambda_hl_lower_vals),
                                 ymax = log(lambda_hl_upper_vals)),
-                                fill = "green", alpha = "0.2") + 
+                                fill = "green", alpha = 0.2) + 
                 geom_vline(xintercept = delta, color = "black", size = 0.8, alpha = 0.6) +
                 scale_color_manual(name = "End-points",
                                    values = c("blue", "purple", "brown", "red", "yellow", "green"), 
@@ -1396,15 +1400,15 @@ ggplot() +
   geom_ribbon(aes(x = delta_vals,
                   ymin = log(lambda_lh_lower_vals_slc),
                   ymax = log(lambda_lh_upper_vals_slc)),
-                  fill = "blue", alpha = "0.2") +
+                  fill = "blue", alpha = 0.2) +
   geom_ribbon(aes(x = delta_vals,
                   ymin = log(lambda_hh_lower_vals_slc),
                   ymax = log(lambda_hh_upper_vals_slc)),
-                  fill = "red", alpha = "0.2") +
+                  fill = "red", alpha = 0.2) +
   geom_ribbon(aes(x = delta_vals,
                   ymin = log(lambda_hl_lower_vals_slc),
                   ymax = log(lambda_hl_upper_vals_slc)),
-                  fill = "green", alpha = "0.2") + 
+                  fill = "green", alpha = 0.2) + 
   scale_color_manual(name = "End-points", values = c("blue",
                                                      "purple",
                                                      "brown",
@@ -1632,15 +1636,15 @@ lambda_change_plot_slc <- function(lambda_init, delta, n){
                 geom_ribbon(aes(x = delta_vals, 
                                 ymin = log(lambda_lh_lower_vals_slc), 
                                 ymax = log(lambda_lh_upper_vals_slc)),
-                                fill = "blue", alpha = "0.2") +
+                                fill = "blue", alpha = 0.2) +
                 geom_ribbon(aes(x = delta_vals, 
                                 ymin = log(lambda_hh_lower_vals_slc), 
                                 ymax = log(lambda_hh_upper_vals_slc)),
-                                fill = "red", alpha = "0.2") +
+                                fill = "red", alpha = 0.2) +
                 geom_ribbon(aes(x = delta_vals, 
                                 ymin = log(lambda_hl_lower_vals_slc), 
                                 ymax = log(lambda_hl_upper_vals_slc)),
-                                fill = "green", alpha = "0.2") + 
+                                fill = "green", alpha = 0.2) + 
                 geom_vline(xintercept = delta, 
                            color = "black", 
                            size = 0.8, 

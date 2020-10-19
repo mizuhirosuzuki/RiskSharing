@@ -191,9 +191,9 @@ ggplot() +
   geom_line(aes(alpha_vals, omega_2_lower_vals, color="d")) +
   coord_cartesian(xlim = c(alpha_lower_star-0.1, 1.0)) +
   geom_ribbon(aes(x = alpha_vals, ymin = omega_1_lower_vals, ymax = omega_1_upper_vals), 
-              fill = "orange", alpha = "0.2") + 
+              fill = "orange", alpha = 0.2) + 
   geom_ribbon(aes(x = alpha_vals, ymin = omega_2_lower_vals, ymax = omega_2_upper_vals), 
-              fill = "green", alpha = "0.2") +
+              fill = "green", alpha = 0.2) +
   scale_color_manual(name = "End-points", values = c("blue", "purple", "brown", "red"), 
                      labels = c("omega_1_upper", "omega_2_upper", "omega_1_lower", "omega_2_lower")) +
   xlab("Discount factor") +
@@ -313,9 +313,9 @@ wage_change_plot <- function(w_init, alpha, n, high_wage_dummy){
                 geom_line(aes(alpha_vals, omega_2_lower_vals, color="d")) +
                 coord_cartesian(xlim = c(alpha_lower_star-0.1, 1.0)) +
                 geom_ribbon(aes(x = alpha_vals, ymin = omega_1_lower_vals, 
-                                ymax = omega_1_upper_vals), fill = "orange", alpha = "0.2") + 
+                                ymax = omega_1_upper_vals), fill = "orange", alpha = 0.2) + 
                 geom_ribbon(aes(x = alpha_vals, ymin = omega_2_lower_vals, 
-                                ymax = omega_2_upper_vals), fill = "green", alpha = "0.2") +
+                                ymax = omega_2_upper_vals), fill = "green", alpha = 0.2) +
                 geom_vline(xintercept = alpha, color = "black", size = 0.8, alpha = 0.6) +
                 scale_color_manual(name = "End-points", values = c("blue", "purple", "brown", "red"), 
                                    labels = c("omega_1_upper", "omega_2_upper", "omega_1_lower", "omega_2_lower")) +
@@ -434,7 +434,7 @@ plot_med_init
 ```
 
 In the first figure, once the wage lies between $\omega_{2, lower}$ and $\omega_{1, upper}$, the wages stays there forever no matter what the spot market wages are.
-It should be noted that this corresponds to ``back-loading'' wage schemes, where wages increase from low to high over time.
+It should be noted that this corresponds to *back-loading* wage schemes, where wages increase from low to high over time.
 In the second figure, since the initial wage already lies between $\omega_{2, lower}$ and $\omega_{1, upper}$, the wages stays at the initial point.
 
 ## My interpretations
@@ -443,7 +443,7 @@ When spot labor markets are well-developed, both employers and employees have in
 employers want to fire employees and hire new ones when spot markets wages are low, and employees want to quit and find new jobs when spot markets wages are high.
 While this sounds reasonable, risk-averse wokres do not want to do this because of income fluctuations across time.
 Therefore, firms offer a contract with less fluctuating income (or no fluctuation when the discount factor is sufficiently high) and workers accept it.
-The beuaty in the model (to me) is the established long-term relationships without any enforcement mechanisms and with seemingly tempting outside options.
+The beuaty of the model (to me) is the established long-term relationships without any enforcement mechanisms and with seemingly tempting outside options.
 
 
 

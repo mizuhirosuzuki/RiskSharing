@@ -9,9 +9,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
+<meta name="author" content="Mizuhiro Suzuki" />
 
+<meta name="date" content="2020-10-18" />
 
-<title>index.utf8</title>
+<title>Dynamic limited commitment model in Laczó (2015)</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -307,11 +309,135 @@ $(document).ready(function () {
 
 
 
+<h1 class="title toc-ignore">Dynamic limited commitment model in Laczó (2015)</h1>
+<h4 class="author">Mizuhiro Suzuki</h4>
+<h4 class="date">10/18/2020</h4>
 
 </div>
 
 
+<pre class="r"><code># (Number of grid points on relative Pareeto weight) - 1
+g &lt;- 199</code></pre>
+<pre class="r"><code># income shocks and their transition probabilities of the household
+inc_hh &lt;- c(2/3, 4/3)
+P_hh &lt;- matrix(rep(c(0.1, 0.9), 2), nrow = 2, byrow = TRUE)
 
+# income shocks and their transition probabilities of the village
+inc_vil &lt;- c(2/3, 4/3)
+P_vil &lt;- matrix(rep(c(0.2, 0.8), 2), nrow = 2, byrow = TRUE)
+
+# transitiono super-matrix of income shocks
+R &lt;- kronecker(P_hh, P_vil)
+
+# number of states
+# (number of income states for a household times
+# number of income states for the village)
+S &lt;- 2 * 2
+
+s01 &lt;- matrix(nrow = S, ncol = 1)
+s01[, 1] &lt;- inc_hh
+s01[, 1] &lt;- sort(s01[, 1])
+s02 &lt;- matrix(nrow = S, ncol = 1)
+s02[, 1] &lt;- inc_vil
+
+# Income matrix
+# (col 1: HH income, col 2: village income)
+
+inc_mat &lt;- as.matrix(expand.grid(inc_hh, inc_vil))
+
+# Aggregate income in each state
+inc_ag &lt;- rowSums(inc_mat)</code></pre>
+<pre class="r"><code># Define utility function
+util &lt;- function(c, sigma) {
+  if (sigma != 1) {
+    output = (c ^ (1 - sigma) - 1) / (1 - sigma)
+  } else {
+    output = log(c)
+  }
+  return(output)
+}
+util_prime &lt;- function(c, sigma) c ^ (- sigma)
+  
+
+# Limit points of feasible relative Pareto weights
+x_int_all &lt;- matrix(nrow = S, ncol = 2)
+
+delta &lt;- 0.8 # time discount factor 
+sigma &lt;- 0.4 # coefficient of relative risk aversion
+pcphi &lt;- 0.1 # punishment under autarky
+
+# Expected utility under autarky for HH
+U_hh_aut &lt;- numeric(length = 2)
+i &lt;- 1
+diff &lt;- 1
+while (diff &gt; 1e-4) {
+  U_hh_aut_new &lt;- util((inc_hh * (1 - pcphi)), sigma) + delta * P_hh %*% U_hh_aut
+  diff &lt;- max(abs(U_hh_aut_new - U_hh_aut))
+  U_hh_aut &lt;- U_hh_aut_new
+}
+U_hh_aut</code></pre>
+<pre><code>##           [,1]
+## [1,] 0.0773268
+## [2,] 0.7099580</code></pre>
+<pre class="r"><code># Expected utility under autarky for village
+U_vil_aut &lt;- numeric(length = 2)
+i &lt;- 1
+diff &lt;- 1
+while (diff &gt; 1e-4) {
+  U_vil_aut_new &lt;- util((inc_vil * (1 - pcphi)), sigma) + delta * P_vil %*% U_vil_aut
+  diff &lt;- max(abs(U_vil_aut_new - U_vil_aut))
+  U_vil_aut &lt;- U_vil_aut_new
+}
+U_vil_aut</code></pre>
+<pre><code>##            [,1]
+## [1,] -0.1757251
+## [2,]  0.4569061</code></pre>
+<pre class="r"><code># Matrix of expected utilities of autarky
+# (col 1: HH, col 2: village)
+Uaut &lt;- expand.grid(U_hh_aut, U_vil_aut)</code></pre>
+<pre class="r"><code># The grid points of relative Pareto weights
+qmin &lt;- util_prime(max(inc_vil), sigma) / util_prime(min(inc_hh * (1 - pcphi)), sigma)
+qmax &lt;- util_prime(min(inc_vil * (1 - pcphi)), sigma) / util_prime(max(inc_hh), sigma)
+q &lt;- exp(seq(log(qmin), log(qmax), length.out = (g + 1)))</code></pre>
+<pre class="r"><code># Matrix of relative Pareto weights with which participation constraints are satisfied
+# with equality
+# (dim 1: income state, dim 2: relative Pareto weight)
+
+x &lt;- matrix(q, nrow = S, ncol = (g + 1), byrow = TRUE)
+
+# The grid points of consumption of HH
+# Consumption is determined by aggregate income (inc_ag) and
+# relative Pareto weights (q)
+
+cons_hh &lt;- matrix(nrow = S, ncol = (g + 1))
+for (k in 1:S) {
+  for (l in 1:(g + 1)) {
+    cons_hh[k, l] &lt;- inc_ag[k] / (1 + q[l] ^ (- 1 / sigma))
+  }
+}</code></pre>
+<pre class="r"><code># Perfect risk sharing ==============
+
+# Obtain value functions by value function iterations
+
+# initial guess, expected utilities under autarky
+V_hh &lt;- outer(Uaut[, 1], rep(1, (g + 1)))
+V_vil &lt;- outer(Uaut[, 2], rep(1, (g + 1)))
+V_hh_new &lt;- matrix(nrow = S, ncol = (g + 1))
+V_vil_new &lt;- matrix(nrow = S, ncol = (g + 1))
+
+
+j &lt;- 1
+diff &lt;- 1
+while (diff &gt; 1e-8 &amp; j &lt; 500) {
+  for (i in 1:(g + 1)) {
+    V_hh_new[, i] &lt;- util(cons_hh[, i], sigma) + delta * R %*% V_hh[, i]
+    V_vil_new[, i] &lt;- util(inc_ag - cons_hh[, i], sigma) + delta * R %*% V_vil[, i]
+  }
+  diff &lt;- max(max(abs(V_hh_new - V_hh)), max(abs(V_vil_new - V_vil)))
+  V_hh &lt;- V_hh_new
+  V_vil &lt;- V_vil_new
+  j &lt;- j + 1
+}</code></pre>
 
 
 

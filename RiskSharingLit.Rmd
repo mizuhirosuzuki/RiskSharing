@@ -30,6 +30,10 @@ The seminal paper in this literature is @Townsend1994, and I introduce studies b
 
 ## Tests of full risk-sharing model in the U.S.
 
+There are several studies applying the above estimation equation to the US data.
+One of the main focuses of these studies is th test of market completeness:
+under ...
+
 ### @Mace1991
 
 She uses Consumer Expenditure Survey (CES) in the U.S. for 1980-1983 and analyzes how, controlling for changes in aggregate consumption, idiosyncratic shocks affect changes in individual consumption.
@@ -76,9 +80,59 @@ But this may be less relevant in the context of developing countries since polic
 ## Risk-sharing under heterogeneity
 
 In the theoretical part of this paper, @Cochrane1991 allows heterogeneous risk and time preferences across households.
-But in his "cross-sectional" analysis, if the economic shocks are independent of these variables, this heterogeneity does not matter for the test of full risk-sharing.
+However, in his "cross-sectional" analysis, if the economic shocks are independent of these variables, this heterogeneity does not matter for the test of full risk-sharing.
+Also, @Townsend1994 conducts a time-series analysis for each household in ICRISAT data, which allows different preferrences for different households.
+One problem in this analysis is the temporal length of the data: there are only 10 years of data, which seems too short to conduct a time-series anlaysis.
+Here I will introduce works explicitly focusing on the heterogeneouos preferences of households in the context of risk sharing.
 
 ### @Kurosaki2001
+
+To investigate how risk and time preferences affect the test of full risk-sharing as in @Townsend1994, he considers a model with a household-specific time discount factor ($\rho_i$) and utility function in which risk preferences can differ ($u_i(c_{ist})$).
+Assuming an interior solution, as in @Townsend1994, the Pareto optimal allocation requires
+
+$$
+  \lambda_i \rho_i^t u_i'(c_{ist}) = \mu_{st} \quad \forall (s,t),
+$$
+where $\lambda_{i}$ is a Pareto weight for household $i$ and $\mu_{st}$ is the Lagrange multiplier associated with the feasibility constraint, devided by the probability that the state $s$ is realized in time $t$.
+Assuming a CARA preferences with a household-specific coefficient of absolute risk aversion, $A_i$, we can derive an equation that looks similar to the one in a canonical risk-sharing model:
+
+$$
+  c_{it} = \alpha_i \overline{c}_t + \beta_i + \gamma_i t,
+$$
+where
+
+\begin{align*}
+  \alpha_i &= \frac{1}{A_i} \left[ \frac{1}{N} \sum_j \frac{1}{A_j} \right]^{-1} \\
+  \beta_i  &= \frac{1}{A_i} \left[ \ln \lambda_i - \frac{1}{N} \sum_j \alpha_j \ln \lambda_j \right]^{-1} \\
+  \gamma_i &= \frac{1}{A_i} \left[ \ln \rho_i - \frac{1}{N} \sum_j \alpha_j \ln \rho_j \right]^{-1},
+\end{align*}
+
+where $N$ is the number of households in the community.
+
+This equation implies that 
+
+1. $\alpha_i$ is smaller for a more risk averse household, and
+2. $\gamma_i$ is more negative (ie. consumption decreases over time) for a more myopic household.
+
+Note that, if there is no heterogeneity, $\alpha_i$ is common for all households and $\gamma_i = 0 \quad \forall i$.
+A CRRA utility function results in a similar equation, but with log consumption.
+
+To test whether (i) full risk sharing is achieved and (ii) there is any heterogeneity in terms of time and risk preferrences, with CARA utility functinos, the author estimate
+
+$$
+  \Delta c_{it} = b_i + a_i \Delta \overline{c}_t + \zeta_i X_{it} + u_{it},
+$$
+
+where $X_{it}$ is the first-different household income.
+While this looks similar to the estimation equation in @Townsend1994, this equation is much more flexible due to household-specific intercepts and slopes.
+Notice that here the effect of household income ($\zeta_i$) is household specific as well, which allows the author to see which households are more "vulnerable" in the sense that income and consumption are more correlated.
+The estimation results suggest that (i) the full risk-sharing is not achieved, and (ii) there is heterogeneity among households in their sensitivity to aggregate and idiosyncratic shocks.
+The author also investigates what variables are correlated with each of $b_i$, $a_i$, and $\zeta_i$.
+
+One problem of this analysis is that, as pointed out in the paper, the interpretation of $b_i$ and $a_i$ is not clear when the full risk-sharing hypothesis is rejected.
+As @Ligon2016 argues, given that the full risk sharing hypothesis is rejected, the theory does not provide an interpretation that the equation above is a consumption function.
+In this sense, interpreting the estimates of $b_i$ and $a_i$ as something reflecting time and risk preferences can be misleading, and more complete model needs to explain why full risk-sharing fails while taking into account preference heterogeneity.
+@Laczo2015 can be seen as a work attempting this, using dynamic limited commitment as the factor preventing full risk-sharing.
 
 ### @Schulhofer-Wohl2011
 
@@ -115,8 +169,50 @@ Thus, he argues that, rather than relying on the costly income diversification (
 
 ### @Coate1993:
 
+Like @Kimball1988, this paper also considers a risk-sharing model with limited commitment model.
+Unlike @Kimball1988, however, their framework is based on an infinite-period repeated game:
+in each period, players either follow a transfer schedule or renege and will stay in autarky forever.
+Under symmetric income distribution, they compare first-best transfers under full risk-sharing and best implementable transfers (best in the sense that the transfers that maximize the expected utilities).
+
+The problem considered in the paper is to maximize the average expected utility of a household (by symmetry, a transfer schedule that maximizes the average expected utility of one household maximizes that of the other household), subject to the following *implementability constraints*:
+
+\begin{align*}
+  u(y_i) - u(y_i - \theta_{ij}) &\le (v^A(\Theta) - \overline{v}) / r \quad \text{for all } (i, j) \\
+  u(y_j) - u(y_j + \theta_{ij}) &\le (v^B(\Theta) - \overline{v}) / r \quad \text{for all } (i, j),
+\end{align*}
+
+where $y$ is income, $\theta_{ij}$ is the transfer from A to B when the state is $(i, j)$, $\Theta$ is the entire transfer schedule, or *informal insurance arrangement*, $\overline{v}$ is the value under autarky, and $r$ is the discount rate.
+Using this framework, they examine (i) how the best implementable (ie. under the implementability constraints) insurance arrangement and the full risk-sharing insurance arrangement differ, and (ii) how the best implementable insurance arrangement changes with exogenous variables of the model (discount rate and correlation in income realizations).
+Also, they conduct numerical exercises to show how changes in exogenous variables affect the insurance arrangement.
+The numerical exercises 
+
+As suggestions for future research (I mean, "future" from their perspective), they provide three possible directions to extend their model:
+
+1. to allow non-stationary insurance arrangements, which can depend on both current and past income realizations;
+2. to allow households to save;
+3. to allow households' income to depend on its work effort which others in the community cannot observe.
+
+Interestingly, all of these three extensions have been achieved by later works as shown below.
+
+#### Difference between @Kimball1988 and @Coate1993
+
+The main difference between this paper and @Kimball1988 is that, 
+
+- while @Kimball1988 identifies the conditions (i) for risk-sharing institutions to exist and (ii) for full risk-sharing to be achieved,
+- @Coate1993 investigates the properties of the best implementable insurance arrangement (ie. how this is different from the insurance arrangement under full risk-sharing and how this arrangement changes as exogenous variables vary).
 
 ## Dynamic limited commitment model
+
+Unlike *static* limited commitment models, *dynamic* limited commitment models allow insurance arrangement to depend both on current and past income realizations, which allows more efficient risk-sharing.
+As pointed out in @Ligon2002, in a sense static limited commitment models provide a framework to understand a system of gifts or transfers, whereas dynamic limited commitment models provide a framework for a system of mutual insurance through loans (borrowing when times are bad and repaying when times are good).
+
+This model is largely based on the model in @Thomas1988.
+In this paper, they consider self-enforcing wage contracts (ie. since there is no enforceable contract, both workers and employers can renege) and analyze how wages can be updated in response to market shocks (ie. changes in spot market wages).
+They provide a simple update rule: "around each spot wage is a time invariant interval and the contract wage changes each period by the smallest amount necessary to bring it into the current interval."
+The main figure in this paper is replicated [here](TW88_code.html).
+
+Also, I feel this model is closely related to the model of relational contract, where there is no enforceable contract and the nature of repeated game helps players to behave in a certain way to maintain the long-term relationship.
+Both models have commonality in the sense that relationships are sustained by the value of future relationships, even without any enforcement.
 
 ### @Kocherlakota1996:
 
