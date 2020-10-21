@@ -295,6 +295,9 @@ $(document).ready(function () {
   <a href="LTW_code.html">Ligon et al. (2002)</a>
 </li>
 <li>
+  <a href="Laczo2015_code.html">Laczó (2015)</a>
+</li>
+<li>
   <a href="TW88_code.html">Thomas and Worrall (1988)</a>
 </li>
       </ul>
@@ -316,37 +319,73 @@ $(document).ready(function () {
 </div>
 
 
-<pre class="r"><code># (Number of grid points on relative Pareeto weight) - 1
-g &lt;- 199</code></pre>
+<div id="model" class="section level2">
+<h2>Model</h2>
+<p>In this document, I consider a problem of two households, unlike the model in <span class="citation">Laczó (2015)</span> that considers many households in a village. As in other studies, <span class="citation">Laczó (2015)</span> considers the constrained-efficient consumptioon alocatinos. The social planner solves the following problem:</p>
+<p><span class="math display">\[\begin{align*}
+  &amp;\max_{\{c_{it}(s^t)\}} \sum_i \lambda_i \sum_{t = 1}^{\infty} \sum_{s^t} \delta^t \pi(s^t) u_i(c_{it}(s^t)) \\
+  \text{subject to} 
+  &amp;\sum_i c_{it} (s^t) \le \sum_i y_{it}(s_t) \quad \forall s^t, \forall t \\
+  &amp;\sum_{r = t}^{\infty} \sum_{s^r} \delta^{r - t} \pi(s^r | s^t) u_i(c_{ir}(s^r)) \ge U_{i}^{aut}(s_t) \quad \forall s^t, \forall t, \forall i.
+\end{align*}\]</span></p>
+<p>Here, the income follows a Markov process and is independent across households. Notice the difference between the history of states up to period <span class="math inline">\(t\)</span> (<span class="math inline">\(s^t\)</span>) and the state at period <span class="math inline">\(t\)</span> (<span class="math inline">\(s_t\)</span>). The variable <span class="math inline">\(\lambda_i\)</span> is the Pareto weight of a household <span class="math inline">\(i\)</span>. The last equation is the participation constraints (PCs), whose RHS is the value of autarky and the solution of the following Bellman equation:</p>
+<p><span class="math display">\[
+  U_i^{aut}(s_t) = u_i((1 - \phi) y_{it}(s_t)) + \delta \sum_{s^{t + 1}} \pi(s_{t + 1} | s_t) U_{i}^{aut}(s_{t + 1}),
+\]</span> where <span class="math inline">\(\phi\)</span> is the punishment of renege, which is a fraction of consumption each period. It is assumed that savings are absent.</p>
+<p>Letting the multiplier on the PC of <span class="math inline">\(i\)</span> be <span class="math inline">\(\delta^t \pi(s^t) \mu_i(s^t)\)</span> andd the multiplier on the aggregate resource constraint be <span class="math inline">\(\delta^t \pi(s^t) \rho(s^t)\)</span>, the Lagrangian is</p>
+<p><span class="math display">\[
+  \sum_{t = 1}^{\infty} \sum_{s^t} \delta^t \pi(s^t) \left\{ \sum_i \left[ \lambda_i u_i(c_{it}(s^t)) + \mu_i(s^t) \left( \sum_{r = t}^{\infty} \sum_{s^r} \delta^{r - t} \pi(s^r | s^t) u_i (c_{ir} (s^r)) - U_i^{aut}(s_t) \right) \right] + \rho(s^t) \left( \sum_i \left(y_{it} (s_t) - c_{it} (s^t) \right) \right) \right\}
+\]</span> With the recursive method in <span class="citation">Marcet and Marimon (2019)</span>, this Lagrangian can be written as</p>
+<p><span class="math display">\[
+  \sum_{t = 1}^{\infty} \sum_{s^t} \delta^t \pi(s^t) \left\{ \sum_i \left[ M_i (s^{t - 1}) u_i (c_{it} (s^t)) + \mu_i (s^t) (u_i (c_{it} (s^t)) - U_i^{aut} (s_t)) \right] + \rho(s^t) \left( \sum_i \left( y_{it}(s_t) - c_{it} (s^t) \right) \right) \right\},
+\]</span></p>
+<p>where <span class="math inline">\(M_i(s^t) = M_i(s^{t - 1}) + \mu_i(s^t)\)</span> and <span class="math inline">\(M_i(s^0) = \lambda\)</span>. The variable <span class="math inline">\(M_i(s^t)\)</span> is the current Pareto weight of household <span class="math inline">\(i\)</span> and is equal to its initial Pareto weight plus the sum of the Lagrange mulipliers on its PCs along the history <span class="math inline">\(s^t\)</span>.</p>
+<p>Let <span class="math inline">\(x_i(s^t) = \frac{M_i(s^t)}{M_v(s^t)}\)</span>, the relative Pareto weight of household <span class="math inline">\(i\)</span> under the history <span class="math inline">\(s^t\)</span>, where the weight of household <span class="math inline">\(v\)</span> is normalized to <span class="math inline">\(1\)</span>. Then, the vector of relative weights <span class="math inline">\(x(s^t)\)</span> plays as a role as a co-state variable, and the solution consists of policy functions <span class="math inline">\(x_{it}(s_t, x_{t - 1})\)</span> and <span class="math inline">\(c_{it}(s_t, x_{t - 1})\)</span>. That is, <span class="math inline">\(x_{t - 1}\)</span> is a sufficient statistic for the history up to <span class="math inline">\(t - 1\)</span>. The optimality condition is</p>
+<p><span class="math display">\[
+  \frac{u_v&#39;(c_{vt}(s_t, x_{t - 1}))}{u_i&#39;(c_{it}(s_t, x_{t - 1}))} = x_{it}(s_t, x_{t - 1}) \quad \forall i.
+\]</span></p>
+<p>The value functioon can be written recursively as</p>
+<p><span class="math display">\[
+  V_i(s_t, x_{t - 1}) = u_i (c_{it} (s_t, x_{t - 1})) + \delta \sum_{s_{t + 1}} \pi(s_{t + 1} | s_t) V_i (s_{t + 1}, x_t(s_t, x_{t - 1})).
+\]</span></p>
+<p><span class="citation">(<span class="citeproc-not-found" data-reference-id="Ligon2015"><strong>???</strong></span>)</span> argues that, as in <span class="citation">Ligon, Thomas, and Worrall (2002)</span>, the evolution of relative Pareto weights is fully characterized by state-dependent intervals, which give the weights in the case where PCs are binding.</p>
+</div>
+<div id="computation" class="section level2">
+<h2>Computation</h2>
+<p>In this section I conduct a numerical exercise to compute value functions under the limited commitment model with heterogeneous risk preferences.</p>
+<div id="model-settings" class="section level3">
+<h3>Model settings</h3>
+<p>I simplify the model of <span class="citation">Laczó (2015)</span> and consider two households with <span class="math inline">\(2 \times 2\)</span> states. The income process are iid:</p>
+<p><span class="math display">\[
+  y_1 = [2/3, 4/3],\ y_2 = [2/3, 4/3], \\
+  \pi_1 = [0.1, 0.9],\ \pi_2 = [0.1, 0.9].
+\]</span></p>
 <pre class="r"><code># income shocks and their transition probabilities of the household
-inc_hh &lt;- c(2/3, 4/3)
-P_hh &lt;- matrix(rep(c(0.1, 0.9), 2), nrow = 2, byrow = TRUE)
+inc1 &lt;- c(2/3, 4/3)
+P1 &lt;- matrix(rep(c(0.1, 0.9), 2), nrow = 2, byrow = TRUE)
 
 # income shocks and their transition probabilities of the village
-inc_vil &lt;- c(2/3, 4/3)
-P_vil &lt;- matrix(rep(c(0.2, 0.8), 2), nrow = 2, byrow = TRUE)
+inc2 &lt;- c(2/3, 4/3)
+P2 &lt;- matrix(rep(c(0.1, 0.9), 2), nrow = 2, byrow = TRUE)
 
-# transitiono super-matrix of income shocks
-R &lt;- kronecker(P_hh, P_vil)
+# transition super-matrix of income shocks
+R &lt;- kronecker(P2, P1)
 
 # number of states
 # (number of income states for a household times
 # number of income states for the village)
-S &lt;- 2 * 2
-
-s01 &lt;- matrix(nrow = S, ncol = 1)
-s01[, 1] &lt;- inc_hh
-s01[, 1] &lt;- sort(s01[, 1])
-s02 &lt;- matrix(nrow = S, ncol = 1)
-s02[, 1] &lt;- inc_vil
+S &lt;- length(inc1) * length(inc2)
 
 # Income matrix
 # (col 1: HH income, col 2: village income)
-
-inc_mat &lt;- as.matrix(expand.grid(inc_hh, inc_vil))
+inc_mat &lt;- as.matrix(expand.grid(inc1, inc2))
 
 # Aggregate income in each state
 inc_ag &lt;- rowSums(inc_mat)</code></pre>
+<p>I assume the CRRA utility functions:</p>
+<p><span class="math display">\[
+  u_i(c_{it}) = \frac{c_{it}^{1 - \sigma_i} - 1}{1 - \sigma_i}.
+\]</span></p>
 <pre class="r"><code># Define utility function
 util &lt;- function(c, sigma) {
   if (sigma != 1) {
@@ -356,88 +395,288 @@ util &lt;- function(c, sigma) {
   }
   return(output)
 }
-util_prime &lt;- function(c, sigma) c ^ (- sigma)
-  
-
-# Limit points of feasible relative Pareto weights
-x_int_all &lt;- matrix(nrow = S, ncol = 2)
-
-delta &lt;- 0.8 # time discount factor 
-sigma &lt;- 0.4 # coefficient of relative risk aversion
-pcphi &lt;- 0.1 # punishment under autarky
+util_prime &lt;- function(c, sigma) c ^ (- sigma)</code></pre>
+</div>
+<div id="value-of-autarky" class="section level3">
+<h3>Value of autarky</h3>
+<pre class="r"><code>delta &lt;- 0.9 # time discount factor 
+sigma1 &lt;- 1.0 # coefficient of relative risk aversion of HH1
+sigma2 &lt;- 1.0 # coefficient of relative risk aversion of HH2
+pcphi &lt;- 0.0 # punishment under autarky
 
 # Expected utility under autarky for HH
-U_hh_aut &lt;- numeric(length = 2)
+U1_aut &lt;- numeric(length = length(inc1))
 i &lt;- 1
 diff &lt;- 1
-while (diff &gt; 1e-4) {
-  U_hh_aut_new &lt;- util((inc_hh * (1 - pcphi)), sigma) + delta * P_hh %*% U_hh_aut
-  diff &lt;- max(abs(U_hh_aut_new - U_hh_aut))
-  U_hh_aut &lt;- U_hh_aut_new
+while (diff &gt; 1e-8) {
+  U1_aut_new &lt;- util((inc1 * (1 - pcphi)), sigma1) + delta * P1 %*% U1_aut
+  diff &lt;- max(abs(U1_aut_new - U1_aut))
+  U1_aut &lt;- U1_aut_new
+  i &lt;- i + 1
 }
-U_hh_aut</code></pre>
-<pre><code>##           [,1]
-## [1,] 0.0773268
-## [2,] 0.7099580</code></pre>
-<pre class="r"><code># Expected utility under autarky for village
-U_vil_aut &lt;- numeric(length = 2)
+
+# Expected utility under autarky for village
+U2_aut &lt;- numeric(length = length(inc2))
 i &lt;- 1
 diff &lt;- 1
-while (diff &gt; 1e-4) {
-  U_vil_aut_new &lt;- util((inc_vil * (1 - pcphi)), sigma) + delta * P_vil %*% U_vil_aut
-  diff &lt;- max(abs(U_vil_aut_new - U_vil_aut))
-  U_vil_aut &lt;- U_vil_aut_new
+while (diff &gt; 1e-8) {
+  U2_aut_new &lt;- util((inc2 * (1 - pcphi)), sigma2) + delta * P2 %*% U2_aut
+  diff &lt;- max(abs(U2_aut_new - U2_aut))
+  U2_aut &lt;- U2_aut_new
+  i &lt;- i + 1
 }
-U_vil_aut</code></pre>
-<pre><code>##            [,1]
-## [1,] -0.1757251
-## [2,]  0.4569061</code></pre>
-<pre class="r"><code># Matrix of expected utilities of autarky
+
+# Since in this case the income process are iid, 
+# values under autarky can be computed in the following way:
+# U1_out = util((1 - pcphi) * inc1, sigma1) + delta / (1 - delta) * P1 %*% util((1 - pcphi) * inc1, sigma1)
+# U2_out = util((1 - pcphi) * inc2, sigma2) + delta / (1 - delta) * P2 %*% util((1 - pcphi) * inc2, sigma2)
+# This way does not work when income processes are autocorrelated, as in the original model of Laczo (2015)
+
+# Matrix of expected utilities of autarky
 # (col 1: HH, col 2: village)
-Uaut &lt;- expand.grid(U_hh_aut, U_vil_aut)</code></pre>
-<pre class="r"><code># The grid points of relative Pareto weights
-qmin &lt;- util_prime(max(inc_vil), sigma) / util_prime(min(inc_hh * (1 - pcphi)), sigma)
-qmax &lt;- util_prime(min(inc_vil * (1 - pcphi)), sigma) / util_prime(max(inc_hh), sigma)
+Uaut &lt;- expand.grid(U1_aut, U2_aut)</code></pre>
+</div>
+<div id="grid-of-relative-pareto-weights-and-consumption-on-the-grid-points" class="section level3">
+<h3>Grid of relative Pareto weights and consumption on the grid points</h3>
+<p>Here, I make the grid of relative Pareto weight of household 1, <span class="math inline">\(x(s^t)\)</span>, on which I compute the values (I use the notation <span class="math inline">\(x(s^t)\)</span> rather than <span class="math inline">\(x_i(s^t)\)</span> since there are only two households). The number of grid points is <span class="math inline">\(200\)</span>.</p>
+<pre class="r"><code># (Number of grid points on relative Pareto weight) - 1
+g &lt;- 199
+
+# The grid points of relative Pareto weights
+qmin &lt;- util_prime(max(inc2), sigma2) / util_prime(min(inc1 * (1 - pcphi)), sigma1)
+qmax &lt;- util_prime(min(inc2 * (1 - pcphi)), sigma2) / util_prime(max(inc1), sigma1)
 q &lt;- exp(seq(log(qmin), log(qmax), length.out = (g + 1)))</code></pre>
-<pre class="r"><code># Matrix of relative Pareto weights with which participation constraints are satisfied
-# with equality
-# (dim 1: income state, dim 2: relative Pareto weight)
-
-x &lt;- matrix(q, nrow = S, ncol = (g + 1), byrow = TRUE)
-
-# The grid points of consumption of HH
+<p>Then, I compute consumptions of the household 1 on these grid points. From the optimality condition and the CRRA utility functions, we obtain</p>
+<p><span class="math display">\[
+  \frac{(y_{1t} + y_{2t} - c_{1t})^{- \sigma_2}}{c_{1t}^{- \sigma_1}} = x_{t}.
+\]</span></p>
+<p>Since there is no closed form solution for this, I derive <span class="math inline">\(c_{1t}\)</span> numerically:</p>
+<pre class="r"><code># The grid points of consumption of HH 1
 # Consumption is determined by aggregate income (inc_ag) and
 # relative Pareto weights (q)
-
-cons_hh &lt;- matrix(nrow = S, ncol = (g + 1))
+cons1 &lt;- matrix(nrow = S, ncol = (g + 1))
 for (k in 1:S) {
   for (l in 1:(g + 1)) {
-    cons_hh[k, l] &lt;- inc_ag[k] / (1 + q[l] ^ (- 1 / sigma))
+    f = function(w) util_prime((inc_ag[k] - w), sigma2) - q[l] * util_prime(w, sigma1)
+    v = uniroot(f, c(1e-5, (inc_ag[k] - 1e-5)), tol = 1e-8, maxiter = 100)
+    cons1[k, l] &lt;- v$root
   }
 }</code></pre>
-<pre class="r"><code># Perfect risk sharing ==============
+</div>
+<div id="values-under-risk-sharing-full" class="section level3">
+<h3>Values under risk-sharing (full)</h3>
+<p>Now, I compute the values under full risk-sharing, which will be used as the initial values in value function iterations under the limited commitment model. Note that, under full risk sharing, the consumption only depends on the aggregate resources and time-invariate relative Pareto weights. Hence, I numerically solve the following Bellman equation:</p>
+<p><span class="math display">\[
+  V_i^{full}(s_t, x) = u_i(c_{it}(s_t, x)) + \delta \sum_{s^{t + 1}} \pi(s_{t + 1} | s_t) V_{i}^{full}(s_{t + 1}, x).
+\]</span></p>
+<pre class="r"><code># Initial guess is expected utilities under autarky
+V1 &lt;- outer(Uaut[, 1], rep(1, (g + 1)))
+V2 &lt;- outer(Uaut[, 2], rep(1, (g + 1)))
+V1_new &lt;- matrix(nrow = S, ncol = (g + 1))
+V2_new &lt;- matrix(nrow = S, ncol = (g + 1))
 
 # Obtain value functions by value function iterations
-
-# initial guess, expected utilities under autarky
-V_hh &lt;- outer(Uaut[, 1], rep(1, (g + 1)))
-V_vil &lt;- outer(Uaut[, 2], rep(1, (g + 1)))
-V_hh_new &lt;- matrix(nrow = S, ncol = (g + 1))
-V_vil_new &lt;- matrix(nrow = S, ncol = (g + 1))
-
-
 j &lt;- 1
 diff &lt;- 1
 while (diff &gt; 1e-8 &amp; j &lt; 500) {
-  for (i in 1:(g + 1)) {
-    V_hh_new[, i] &lt;- util(cons_hh[, i], sigma) + delta * R %*% V_hh[, i]
-    V_vil_new[, i] &lt;- util(inc_ag - cons_hh[, i], sigma) + delta * R %*% V_vil[, i]
-  }
-  diff &lt;- max(max(abs(V_hh_new - V_hh)), max(abs(V_vil_new - V_vil)))
-  V_hh &lt;- V_hh_new
-  V_vil &lt;- V_vil_new
+  V1_new &lt;- util(cons1, sigma1) + delta * R %*% V1
+  V2_new &lt;- util(inc_ag - cons1, sigma2) + delta * R %*% V2
+  diff &lt;- max(max(abs(V1_new - V1)), max(abs(V2_new - V2)))
+  V1 &lt;- V1_new
+  V2 &lt;- V2_new
   j &lt;- j + 1
-}</code></pre>
+}
+
+V1_full &lt;- V1
+V2_full &lt;- V2</code></pre>
+</div>
+<div id="values-under-risk-sharing-limited-commitment" class="section level3">
+<h3>Values under risk-sharing (limited commitment)</h3>
+<p>Next, I derive the state-dependent intervals of relative Pareto weights and calculate values under the model of limited commitment. To derive the intervals, I use the fact that at the limits of the intervals, the PCs are binding. For instance, to compute the lower limit <span class="math inline">\(\underline{x}^h(s)\)</span>, where <span class="math inline">\(h\)</span> indicates <span class="math inline">\(h\)</span>’th iteration, the PC of the household 1 is binding:</p>
+<p><span class="math display">\[
+  u_i(c_i^h(s)) + \delta \sum_{s&#39;} \pi(s&#39; | s) V_i^{h - i} (s&#39;, \underline{x}^h(s)) = U_i^{aut}(s),
+\]</span> where the optimality condition is</p>
+<p><span class="math display">\[
+  \frac{u_2&#39;(c_{2}^h(s))}{u_1&#39;(c_{1}(s))} = \underline{x}^h(s).
+\]</span></p>
+<p>Notice that, once the PC binds, the past history, which is summarized by <span class="math inline">\(x_{t - 1}\)</span>, does not matter. This property is called “amnesia” (<span class="citation">Kocherlakota (1996)</span>).</p>
+<pre class="r"><code># Initial guess is expected utilities under full risk sharing
+V1 &lt;- V1_full
+V2 &lt;- V2_full
+V1_new &lt;- matrix(nrow = S, ncol = (g + 1))
+V2_new &lt;- matrix(nrow = S, ncol = (g + 1))
+
+cons1_lc &lt;- matrix(nrow = S, ncol = (g + 1)) # consumption of HH 1 under LC
+x_lc &lt;- matrix(nrow = S, ncol = (g + 1)) # relative Pareto weights under LC
+x_int &lt;- matrix(nrow = S, ncol = 2) # matrix of bounds of intervals
+
+diff &lt;- 1
+iter &lt;- 1
+while (diff &gt; 1e-5) {
+  # First, ignore enforceability and just update the value functions
+  # using the values at the previous iteration
+  V1_new &lt;- util(cons1, sigma1) + delta * R %*% V1
+  V2_new &lt;- util(inc_ag - cons1, sigma2) + delta * R %*% V2
+  
+  # Now check enforceability at each state
+  for (k in 1:S) {
+    
+    # This function calculate the difference between the value when the relative Pareto weight is x
+    # and the value of autarky. This comes from the equation (1) in the supplementary material of
+    # Laczo (2015). Used to calculate the lower bound of the interval.
+    calc_diff_val_aut_1 &lt;- function(x) {
+      # Calculate consumption of HH 1 at a relative Pareto weight x
+      f &lt;- function(w) util_prime(inc_ag[k] - w, sigma2) / util_prime(w, sigma1) - x
+      cons_x &lt;- uniroot(f, c(1e-6, (inc_ag[k] - 1e-6)), tol = 1e-8, maxiter = 100)$root
+      
+      # Index of the point on the grid of relative Pareto weights (q) closest to x
+      q_ind &lt;- which.min(abs(x - q))
+      if (x &gt; q[q_ind]) {
+        q_ind &lt;- q_ind + 1
+      }
+      
+      # Value functions of HH 1 under the relative Pareto weights x
+      # (I use interpolation since x might not be on the grid q)
+      V1_x &lt;- apply(V1, 1, function(y) approxfun(q, y, rule = 2)(x))
+      
+      # difference between 
+      diff &lt;- util(cons_x, sigma1) + delta * R[k,] %*% V1_x - Uaut[k, 1]
+      return(diff)
+    }
+    
+    # Similarly, this function is used to calculate the upper bound.
+    calc_diff_val_aut_2 &lt;- function(x) {
+      # Calculate consumption of HH 1 at a relative Pareto weight x
+      f &lt;- function(w) util_prime(inc_ag[k] - w, sigma2) / util_prime(w, sigma1) - x
+      cons_x &lt;- uniroot(f, c(1e-6, (inc_ag[k] - 1e-6)), tol = 1e-8, maxiter = 100)$root
+      
+      # Index of the point on the grid of relative Pareto weights (q) closest to x
+      q_ind &lt;- which.min(abs(x - q))
+      if (x &gt; q[q_ind]) {
+        q_ind &lt;- q_ind + 1
+      }
+      
+      # Value functions of HH 1 under the relative Pareto weights x
+      # (I use interpolation since x might not be on the grid q)
+      V2_x &lt;- apply(V2, 1, function(y) approxfun(q, y, rule = 2)(x))
+      
+      # difference between 
+      diff &lt;- util(inc_ag[k] - cons_x, sigma2) + delta * R[k,] %*% V2_x - Uaut[k, 2]
+      return(diff)
+    }   
+    
+    # If the relative Pareto weight is too low and violates the PC, then
+    # set the relative Pareto weight to the lower bound of the interval, and
+    # HH1 gets the value under autarky.
+    if ((calc_diff_val_aut_1(qmax) &gt; 0) &amp;&amp; calc_diff_val_aut_1(qmin) &lt; 0) {
+      
+      # Derive the relative Pareto weight that satisfies the equation (1)
+      # in the supplementary material of Laczo (2015)
+      x_low &lt;- uniroot(calc_diff_val_aut_1, c(qmin, qmax), tol = 1e-8, maxiter = 100)$root
+      x_int[k, 1] &lt;- x_low
+      
+      # Index of the point on the grid of relative Pareto weights (q) closest to x_low
+      q_ind_low &lt;- which.min(abs(x_low - q))
+      if (x_low &gt; q[q_ind_low]) {
+        q_ind_low &lt;- q_ind_low + 1
+      }
+      x_lc[k, 1:q_ind_low] &lt;- x_low
+      
+      # Value functions of HH 2 under the relative Pareto weights x
+      # (I use interpolation since x_low might not be on the grid q)
+      V2_x &lt;- apply(V2, 1, function(y) approxfun(q, y, rule = 2)(x_low))
+      
+      # Calculate consumption of HH 1 at a relative Pareto weight x_low
+      f &lt;- function(w) util_prime(inc_ag[k] - w, sigma2) / util_prime(w, sigma1) - x_low
+      cons_x_low &lt;- uniroot(f, c(1e-6, (inc_ag[k] - 1e-6)), tol = 1e-8, maxiter = 100)$root
+      cons1_lc[k, 1:q_ind_low] &lt;- cons_x_low
+      V1_new[k, 1:q_ind_low] &lt;- Uaut[k, 1]
+      V2_new[k, 1:q_ind_low] &lt;- util((inc_ag[k] - cons_x_low), sigma2) + delta * R[k,] %*% V2_x
+    } else if (calc_diff_val_aut_1(qmax) &lt; 0) {
+      V1_new[k,] &lt;- Uaut[k, 1]
+      V2_new[k,] &lt;- Uaut[k, 2]
+      x_lc[k,] &lt;- qmax
+      q_ind_low &lt;- g + 2
+    } else if (calc_diff_val_aut_1(qmin) &gt; 0) {
+      q_ind_low &lt;- 0
+    }
+  
+    # If the relative Pareto weight is too high and violates the PC, then
+    # set the relative Pareto weight to the upper bound of the interval, and
+    # HH2 gets the value under autarky.
+    if ((calc_diff_val_aut_2(qmin) &gt; 0) &amp;&amp; calc_diff_val_aut_2(qmax) &lt; 0) {
+      
+      # Derive the relative Pareto weight that satisfies the equation (2)
+      # in the supplementary material of Laczo (2015)
+      x_high &lt;- uniroot(calc_diff_val_aut_2, c(qmin, qmax), tol = 1e-8, maxiter = 100)$root
+      x_int[k, 2] &lt;- x_high
+      
+      # Index of the point on the grid of relative Pareto weights (q) closest to x_low
+      q_ind_high &lt;- which.min(abs(x_high - q))
+      if (x_high &gt; q[q_ind_high]) {
+        q_ind_high &lt;- q_ind_high + 1
+      }
+      x_lc[k, 1:q_ind_high] &lt;- x_high
+      
+      # Value functions of HH 2 under the relative Pareto weights x
+      # (I use interpolation since x_high might not be on the grid q)
+      V1_x &lt;- apply(V1, 1, function(y) approxfun(q, y, rule = 2)(x_high))
+      
+      # Calculate consumption of HH 1 at a relative Pareto weight x_high
+      f &lt;- function(w) util_prime(inc_ag[k] - w, sigma2) / util_prime(w, sigma1) - x_high
+      cons_x_high &lt;- uniroot(f, c(1e-6, (inc_ag[k] - 1e-6)), tol = 1e-8, maxiter = 100)$root
+      cons1_lc[k, q_ind_high:(g + 1)] &lt;- cons_x_high
+      V1_new[k, q_ind_high:(g + 1)] &lt;- util(cons_x_high, sigma1) + delta * R[k,] %*% V1_x
+      V2_new[k, q_ind_high:(g + 1)] &lt;- Uaut[k, 2]
+    } else if (calc_diff_val_aut_2(qmin) &lt; 0) {
+      V1_new[k,] &lt;- Uaut[k, 1]
+      V2_new[k,] &lt;- Uaut[k, 2]
+      x_lc[k,] &lt;- qmax
+      q_ind_high &lt;- 0
+    } else if (calc_diff_val_aut_1(qmax) &gt; 0) {
+      q_ind_high &lt;- g + 2
+    }
+    
+    if ((q_ind_low + 1) &lt; (q_ind_high - 1)) {
+      V1_new[k, (q_ind_low + 1):(q_ind_high - 1)] &lt;- util(cons1[k, (q_ind_low + 1):(q_ind_high - 1)], sigma1) + delta * R[k,] %*% V1[, (q_ind_low + 1):(q_ind_high - 1)]
+      V2_new[k, (q_ind_low + 1):(q_ind_high - 1)] &lt;- util(inc_ag[k] - cons1[k, (q_ind_low + 1):(q_ind_high - 1)], sigma2) + delta * R[k,] %*% V2[, (q_ind_low + 1):(q_ind_high - 1)]
+    }
+    
+  }
+  
+  diff &lt;- max(max(abs(V1_new - V1)), max(abs(V2_new - V2)))
+  V1 &lt;- V1_new
+  V2 &lt;- V2_new
+  iter &lt;- iter + 1
+  
+}
+
+x_int</code></pre>
+<pre><code>##           [,1]      [,2]
+## [1,] 0.9676304 1.0356206
+## [2,] 1.4853764 1.1027281
+## [3,] 0.9068517 0.6733149
+## [4,] 0.9676304 1.0356206</code></pre>
+<pre class="r"><code># Matrix of relative Pareto weights with which participation constraints are satisfied
+# with equality
+# (dim 1: income state, dim 2: relative Pareto weight)
+x &lt;- matrix(q, nrow = S, ncol = (g + 1), byrow = TRUE)</code></pre>
+<div id="refs" class="references">
+<div id="ref-Kocherlakota1996">
+<p>Kocherlakota, N. R. 1996. “Implications of Efficient Risk Sharing without Commitment.” <em>The Review of Economic Studies</em> 63 (4): 595–609. <a href="https://doi.org/10.2307/2297795">https://doi.org/10.2307/2297795</a>.</p>
+</div>
+<div id="ref-Laczo2015">
+<p>Laczó, Sarolta. 2015. “RISK SHARING WITH LIMITED COMMITMENT AND PREFERENCE HETEROGENEITY: STRUCTURAL ESTIMATION AND TESTING.” <em>Journal of the European Economic Association</em> 13 (2): 265–92. <a href="https://doi.org/10.1111/jeea.12115">https://doi.org/10.1111/jeea.12115</a>.</p>
+</div>
+<div id="ref-Ligon2002">
+<p>Ligon, Ethan, Jonathan P. Thomas, and Tim Worrall. 2002. “Informal Insurance Arrangements with Limited Commitment: Theory and Evidence from Village Economies.” <em>Review of Economic Studies</em> 69 (1): 209–44. <a href="https://doi.org/10.1111/1467-937X.00204">https://doi.org/10.1111/1467-937X.00204</a>.</p>
+</div>
+<div id="ref-Marcet2019">
+<p>Marcet, Albert, and Ramon Marimon. 2019. “Recursive Contracts.” <em>Econometrica</em> 87 (5): 1589–1631.</p>
+</div>
+</div>
+</div>
+</div>
 
 
 

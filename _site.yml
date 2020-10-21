@@ -11,6 +11,8 @@ navbar:
     href: CR93_code.html
   - text: "Ligon et al. (2002)"
     href: LTW_code.html
+  - text: "Laczó (2015)"
+    href: Laczo2015_code.html
   - text: "Thomas and Worrall (1988)"
     href: TW88_code.html
 output:

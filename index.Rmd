@@ -19,6 +19,7 @@ This page is maintained by [Mizuhiro Suzuki](https://github.com/mizuhirosuzuki).
 + [Literature review](RiskSharingLit.html)
 + [Replication of numerical exercises in Coate and Ravallion (1993)](CR93_code.html)
 + [Replication of Figure 1 in Ligon, Thomas, and Worrall (2002)](LTW_code.html)
++ [Dynamic limited commtiment model, using codes by Laczó (2015)](Laczo2015_code.html)
 + [Replication of Figure 1 in Thomas and Worrall (1988)](TW88_code.html)
 
 
