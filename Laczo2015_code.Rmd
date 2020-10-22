@@ -1068,7 +1068,7 @@ util_prime <- function(c, sigma) c ^ (- sigma)
 x0 <- 1
   
 # Calculate values and intervals at different delta values
-delta_seq <- seq(0.8, 0.999, by = 0.001)
+delta_seq <- seq(0.8, 0.999, by = 0.002)
 
 ```
 
@@ -1261,6 +1261,62 @@ ggplot() +
 ```
 
 The figure shows that the end-points of intervals shift to left as the degree of relative risk aversion increases.
+
+## Bonus 3: Three-state income process
+
+```{r}
+
+# income shocks and their transition probabilities of the household
+inc1 <- c(1/4, 2/2, 5/4)
+P1 <- matrix(rep(c(0.2, 0.6, 0.2), 3), nrow = 3, byrow = TRUE)
+
+# income shocks and their transition probabilities of the village
+inc1 <- c(1/4, 2/2, 5/4)
+P2 <- matrix(rep(c(0.2, 0.6, 0.2), 3), nrow = 3, byrow = TRUE)
+
+delta <- 0.85 # time discount factor
+sigma1 <- 1.0 # coefficient of relative risk aversion of HH1
+sigma2 <- 1.0 # coefficient of relative risk aversion of HH2
+pcphi <- 0.0 # punishment under autarky
+
+# (Number of grid points on relative Pareto weight) - 1
+g <- 399
+
+# Define utility function
+util <- function(c, sigma) {
+  if (sigma != 1) {
+    output = (c ^ (1 - sigma) - 1) / (1 - sigma)
+  } else {
+    output = log(c)
+  }
+  return(output)
+}
+util_prime <- function(c, sigma) c ^ (- sigma)
+  
+output_3_states <- V_lc_all_func(
+   inc1, P1, inc2, P2, g, 
+   delta, sigma1, sigma2, pcphi, util, util_prime
+)
+
+saveRDS(output_3_states, file.path("RDSfiles/laczo2015_dynamic_lc_3_states_output.rds"))
+```
+
+```{r, include = FALSE}
+output_3_states <- readRDS("RDSfiles/laczo2015_dynamic_lc_3_states_output.rds")
+```
+
+```{r}
+x_int_3_states <- output_3_states[[5]]
+rownames(x_int_3_states) <- c(
+  "Low, Low", "Meidum, Low", "High, Low",
+  "Low, Medium", "Meidum, Medium", "High, Medium",
+  "Low, High", "Meidum, High", "High, High"
+)
+colnames(x_int_3_states) <- c("x_low", "x_high")
+kable(x_int_3_states, digits = 3)
+```
+
+
 
 ## References
 

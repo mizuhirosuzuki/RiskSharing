@@ -955,7 +955,7 @@ ggplot() +
 <p>After deriving these limits of intervals,</p>
 <ol style="list-style-type: decimal">
 <li>if <span class="math inline">\(x_0 &lt; \underline{x}(s)\)</span>, compute consumption of HH1 based on <span class="math inline">\(\underline{x}(s)\)</span>, let its value be <span class="math inline">\(U_1^{aut}\)</span>, and calculate the value of HH2 using the derived consumption and aggregate income;</li>
-<li>if <span class="math inline">\(x0 &gt; \overline{x}(s)\)</span>, compute consumption of HH1 based on <span class="math inline">\(\overline{x}(s)\)</span>, let the value of HH2 be <span class="math inline">\(U_2^{aut}\)</span>, and calculate the value of HH1 using the derived consumption and aggregate income;</li>
+<li>if <span class="math inline">\(x_0 &gt; \overline{x}(s)\)</span>, compute consumption of HH1 based on <span class="math inline">\(\overline{x}(s)\)</span>, let the value of HH2 be <span class="math inline">\(U_2^{aut}\)</span>, and calculate the value of HH1 using the derived consumption and aggregate income;</li>
 <li>otherwise, use <span class="math inline">\(x_0\)</span> to compute consumption of HH1 and the values of households.</li>
 </ol>
 <p>By iterating these steps, we can calculate the value functions of households and limits of intervals.</p>
@@ -1199,7 +1199,7 @@ util_prime &lt;- function(c, sigma) c ^ (- sigma)
 x0 &lt;- 1
   
 # Calculate values and intervals at different delta values
-delta_seq &lt;- seq(0.8, 0.999, by = 0.001)</code></pre>
+delta_seq &lt;- seq(0.8, 0.999, by = 0.002)</code></pre>
 <pre class="r"><code>static_output &lt;- vector(mode = &quot;list&quot;, length = length(delta_seq))
 for (i in seq_along(delta_seq)) {
   static_output[[i]] &lt;- V_static_lc_all_func(
@@ -1356,6 +1356,10 @@ ggplot() +
   theme_minimal()</code></pre>
 <p><img src="Laczo2015_code_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
 <p>The figure shows that the end-points of intervals shift to left as the degree of relative risk aversion increases.</p>
+</div>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
 <div id="refs" class="references">
 <div id="ref-Coate1993">
 <p>Coate, Stephen, and Martin Ravallion. 1993. “Reciprocity without commitment: Characterization and performance of informal insurance arrangements.” <em>Journal of Development Economics</em> 40 (1): 1–24. <a href="https://doi.org/10.1016/0304-3878(93)90102-S">https://doi.org/10.1016/0304-3878(93)90102-S</a>.</p>
@@ -1374,7 +1378,6 @@ ggplot() +
 </div>
 <div id="ref-Marcet2019">
 <p>Marcet, Albert, and Ramon Marimon. 2019. “Recursive Contracts.” <em>Econometrica</em> 87 (5): 1589–1631.</p>
-</div>
 </div>
 </div>
 </div>

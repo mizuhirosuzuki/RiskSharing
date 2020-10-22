@@ -1,21 +1,16 @@
 ---
-title: "Replication of Figure 1 in Ligon, Thomas & Worrall (2002)"
+title: "Numerical exercises of risk-sharing with limited commitment, mainly based on Ligon, Thomas, and Worrall (2002)"
 author: "Mizuhiro Suzuki"
-date: "5/9/2018"
+date: "10/21/2020"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 packages <- c(
   "knitr",
-  "nleqslv",
-  "ggplot2",
+  "tidyverse",
   "ggrepel",
-  "shiny",
-  "shinythemes",
-  "rootSolve",
-  "BB",
-  "pracma"
+  "latex2exp"
 )
 
 pacman::p_load(packages, character.only = TRUE)
@@ -30,1719 +25,605 @@ pacman::p_load(packages, character.only = TRUE)
 #output: github_document
 ```
 
-## Replicate Figure 1 of Ligon, Thomas & Worrall (2002)
+In this document, my goal is to explain how risk sharing occurs with limited commitment.
+For this, I mainly use the numerical exercise in @Ligon2002 and how consumptino fluctuates in response to income shocks.
+[Here](Laczo2015_code.html) I show how to compute the intervals of the relative Pareto weights, which fully characterize the evolution of consumption.
 
-In this document, my goal is to replicate Figure 1 of Ligon, Thomas & Worrall (2002).
-For this, I need to derive upper and lower bounds of intervals of the ratio of marginal utilities.
-I derive them by considering 4 cases separately; autarky case, non-overlapping case, overlapping case, and first best case.
+## Risk sharing under dynamic limited commitment
 
-Before diving into the derivations, there are several facts that we know (p.221 in the paper):
+Here I will discuss how risk sharing works under dynamic limited commitment as in @Ligon2002.
+As @Ligon2002, there are two households with log utility functions, and the income process, which is independent across households and time, is specified as follows:
 
-1. since all penalties are zero, from Proposition 2(iv), $\lambda_{lh, lower} = \xi_{lh} = 1 / 2$ and $\lambda_{hl, upper} = \xi_{hl} = 2$, and
-2. because of the log-form utility functions, the $hh$ and $ll$ $\lambda$-intervals are identical.
-<!--3. since preferences are identical, by symmetry $\lambda_{lh, lower} = 1 / \lambda_{hl, upper}$ and $\lambda_{hh, lower} = 1 / \lambda_{hh, upper}$ (Why?). -->
+$$
+  y_1 = [2/3, 4/3],\ y_2 = [2/3, 4/3], \\
+  \pi_1 = [0.1, 0.9],\ \pi_2 = [0.1, 0.9].
+$$
 
-Here, I define common parameters and the utility functions:
-
-```{r}
-# y_low and y_high (I decide)
-y_l <- 2 / 3
-y_h <- 4 / 3
-# p = 0.1 (given in the paper)
-p <- 0.1
-# utility functions are log form (and common for two households)
-# Note that this utility functions cannot be changed in this document
-# since the log form is used when I derive transfer amounts and
-# the log form makes the hh and ll lambda-intervals identical.
-u <- function(c){
-  object <- log(c)
-  return(object)
-}
-v <- function(c){
-  object <- log(c)
-  return(object)
-}
-```
-
-I choose $y_l$ and $y_h$ so that the mean is 1 and $y_l / y_h = 1/2$ as in the original paper.
-The log utility functions and the equation (11) in the paper tell us the transfer amount as a function of $\lambda$: $\tau_s = \frac{y_1(s) - y_2(s) \lambda}{1 + \lambda}$.
-
-### Case 1: Autarky case
-
-Under autarky, there is no transfer and thus the intervals become degenerate. 
-Therefore, $\lambda_{hh, lower} = \lambda_{hh, upper} = 1$, $\lambda_{hl, lower} = \lambda_{hl, upper} = 2$, and $\lambda_{lh, lower} = \lambda_{lh, upper} = 1 / 2$.
-
-### Case 2: Non-overlapping case
-
-To calculate the end-points of the intervals, evaluate profits at the following end-points:
-
-* $\lambda_{lh, upper}$, at which the discounted surplus of 2 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_{hh, lower}$, $\lambda_{ll, lower}$, $\lambda_{hl, lower}$, with probabilities $p(1-p)$, $(1-p)^2$, $p^2$, and $p(1-p)$, respectively.
-* $\lambda_{hh, lower}$, at which the discounted surplus of 1 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_{hh, lower}$, $\lambda_{ll, lower}$, $\lambda_{hl, lower}$, with probabilities $p(1-p)$, $(1-p)^2$, $p^2$, and $p(1-p)$, respectively.
-* $\lambda_{hh, upper}$, at which the discounted surplus of 2 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_{hh, upper}$, $\lambda_{ll, upper}$, $\lambda_{hl, lower}$, with probabilities $p(1-p)$, $(1-p)^2$, $p^2$, and $p(1-p)$, respectively.
-* $\lambda_{hl, lower}$, at which the discounted surplus of 1 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_{hh, upper}$, $\lambda_{ll, upper}$, $\lambda_{hl, lower}$, with probabilities $p(1-p)$, $(1-p)^2$, $p^2$, and $p(1-p)$, respectively.
-
-$\begin{aligned}
-  0             & = v(y_2(h) + (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h)) + \\
-                & \delta ((1 - 2p + 2p^2) V_{hh, upper} + p (1 - p) V_{hl, upper}) \\
-  U_{lh, upper} & = u(y_1(l) - (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(l)) + \\
-                & \delta p (1 - p) U_{lh, upper} \\
-  V_{hh, upper} & = v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - v(y_2(h)) + \\
-                & \delta ((1 - 2p + 2p^2) V_{hh, upper} + p (1 - p) V_{hl, upper}) \\
-  0             & = u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - u(y_1(h)) + \\
-                & \delta p (1 - p) U_{lh, upper} \\
-  0             & = v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - v(y_2(h)) + \\
-                & \delta p (1 - p) V_{hl, upper} \\
-  U_{hh, upper} & = u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - u(y_1(h)) + \\
-                & \delta (p (1 - p) U_{lh, upper} + (1 - 2p + 2p^2) U_{hh, upper}) \\
-  V_{hl, upper} & = v(y_2(l) + (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(l)) + \\
-                & \delta p (1 - p) V_{hl, upper} \\
-  0             & = u(y_1(h) - (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(h)) + \\
-                & \delta (p (1 - p) U_{lh, upper} + (1 - 2p + 2p^2) U_{hh, upper})
-\end{aligned}$
-
-The following function solves this system of equations:
+As a result, we can replicate the Figure 1 of @Ligon2002 (for detailed procedure, see the codes [here](Laczo2015_code.html).)
 
 ```{r}
-# For the case where there is no overlap, solve end-points and surpluses at these points
+# Global settings ====================
+sigma1 <- 1.0 # coefficient of relative risk aversion of HH1
+sigma2 <- 1.0 # coefficient of relative risk aversion of HH2
+pcphi <- 0.0 # punishment under autarky
 
-no_overlap <- function(x, delta, y_l, y_h, p){
-  # x <- c(lambda_{lh, upper}, lambda_{hh, lower}, lambda_{hh, upper}, lambda_{hl, lower}, 
-  #       U_{lh, upper}, V_{hh, upper}, U_{hh, upper}, V_{hl, upper})
-  y <- numeric(8)
-  y[1] <- v(y_h + (y_l - y_h * x[1]) / (1 + x[1])) - v(y_h) + 
-            delta * ((1 - 2 * p + 2 * p^2) * x[6] + p * (1 - p) * x[8])
-  y[2] <- u(y_l - (y_l - y_h * x[1]) / (1 + x[1])) - u(y_l) + 
-            delta * (p * (1 - p) * x[5]) - x[5]
-  y[3] <- v(y_h + (y_h - y_h * x[2]) / (1 + x[2])) - v(y_h) + 
-            delta * ((1 - 2 * p + 2 * p^2) * x[6] + p * (1 - p) * x[8]) - x[6]
-  y[4] <- u(y_h - (y_h - y_h * x[2]) / (1 + x[2])) - u(y_h) + 
-            delta * (p * (1 - p) * x[5])
-  y[5] <- v(y_h + (y_h - y_h * x[3]) / (1 + x[3])) - v(y_h) + 
-            delta * (p * (1 - p) * x[8])
-  y[6] <- u(y_h - (y_h - y_h * x[3]) / (1 + x[3])) - u(y_h) + 
-            delta * (p * (1 - p) * x[5] + (1 - 2 * p + 2 * p^2) * x[7]) - x[7]
-  y[7] <- v(y_l + (y_h - y_l * x[4]) / (1 + x[4])) - v(y_l) + 
-            delta * (p * (1 - p) * x[8]) - x[8]
-  y[8] <- u(y_h - (y_h - y_l * x[4]) / (1 + x[4])) - u(y_h) + 
-            delta * (p * (1 - p) * x[5] + (1 - 2 * p + 2 * p^2) * x[7])
-  return(y)
-}
-
-```
-
-Given this function to solve each end-point, I obtain these end-points in this region, and the threshold with other regions ($\delta_1$ (cutoff between autarky region and no-overlapping region) and $\delta_2$ (cutoff between non-overlapping region and overlapping region)).
-
-```{r, warning = FALSE}
-
-delta_vals <- seq(0.80, 0.999, by = 0.0001)
-lambda_lh_upper_vals_no_overlap <- numeric(length(delta_vals))
-lambda_hh_lower_vals_no_overlap <- numeric(length(delta_vals))
-lambda_hh_upper_vals_no_overlap <- numeric(length(delta_vals))
-lambda_hl_lower_vals_no_overlap <- numeric(length(delta_vals))
-same_as_autarky <- numeric(length(delta_vals))
-x_start <- rep((y_l + y_h) / 2, 8)
-for (delta in 1:length(delta_vals)){
-  no_overlap_solutions <- nleqslv(x_start, 
-                                  no_overlap, 
-                                  delta = delta_vals[delta],
-                                  y_l = y_l, 
-                                  y_h = y_h, 
-                                  p = p)$x
-  lambda_lh_upper_vals_no_overlap[delta] <- no_overlap_solutions[1]
-  lambda_hh_lower_vals_no_overlap[delta] <- no_overlap_solutions[2]
-  lambda_hh_upper_vals_no_overlap[delta] <- no_overlap_solutions[3]
-  lambda_hl_lower_vals_no_overlap[delta] <- no_overlap_solutions[4]
-  same_as_autarky[delta] <- is.logical(all.equal(no_overlap_solutions[1], y_l / y_h, tolerance = 1e-3))
-}
-
-delta_1 <- delta_vals[max(which(same_as_autarky == 1))]
-delta_2 <- delta_vals[min(which(lambda_lh_upper_vals_no_overlap
-                                >= lambda_hh_lower_vals_no_overlap))]
-
-
-```
-
-### Case 3: Overlapping case
-
-To calculate the end-points of the intervals, evaluate profits at the following end-points:
-
-* $\lambda_{lh, upper}$, at which the discounted surplus of 2 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$ and $\lambda_{hl, lower}$, with probabilities $1 - p(1-p)$ and $p(1-p)$, respectively.
-* $\lambda_{hh, lower}$, at which the discounted surplus of 1 is 0 and the next-period ratio of marginal utilities are $\lambda_{hh, lower}$, $\lambda_{ll, lower}$, and $\lambda_{hl, lower}$ with probabilities $(1-p)$, $p^2$, and $p(1-p)$, respectively.
-* $\lambda_{hh, upper}$, at which the discounted surplus of 2 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_{hh, upper}$, and $\lambda_{ll, upper}$ with probabilities $p(1-p)$, $(1-p)$, and $p^2$, respectively.
-* $\lambda_{hl, lower}$, at which the discounted surplus of 1 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$ and $\lambda_{hl, lower}$, with probabilities $p(1-p)$ and $1 - p(1-p)$, respectively.
-
-This is very similar to the previous case, but this case is indeed more complicated.
-Why?
-
-This is because, in the previous case I only had to consider discounted surpluses at the end-points, in this overlapping case that does not work.
-For instance, from $\lambda_{lh, upper}$, if \{High, High\} state realized, then the ratio of marginal utilities remains $\lambda_{lh, upper}$ and it is interior of the intervals $[\lambda_{hh, lower},\lambda_{hh, upper}]$.
-Therefore, we need to consider the discounted surpluses at that point too!
-
-Here, I define the discounted surpluses at the interior of intervals as the followings:
-
-* $U_{hh}^*, V_{hh}^*$:       discounted surpluses when income realization is \{High, High\} and the ratio of marginal utilities is $\lambda_{lh, upper}$,
-* $U_{lh}^*, V_{lh}^*$:       discounted surpluses when income realization is \{Low, High\}  and the ratio of marginal utilities is $\lambda_{hh, lower}$,
-* $U_{hl}^*, V_{hl}^*$:       discounted surpluses when income realization is \{High, Low\}  and the ratio of marginal utilities is $\lambda_{hh, upper}$, and 
-* $U_{hh}^{**}, V_{hh}^{**}$: discounted surpluses when income realization is \{High, High\} and the ratio of marginal utilities is $\lambda_{hl, lower}$.
-
-Then, I can write down the conditions:
-
-$\begin{aligned}
-0                & = v(y_2(h) + (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) V_{hh}^* + p (1 - p) V_{hl, upper}) \\
-U_{lh, upper}    & = u(y_1(l) - (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(l)) + \\
-                 & \delta ((1 - 2p + 2p^2) U_{hh}^* + p (1 - p) U_{lh, upper}) \\
-V_{hh}^*         & = v(y_2(h) + (y_1(h) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h)) + \\
-                 & \delta (p (1 - p) V_{hl, upper} + (1 - 2p + 2p^2) V_{hh}^*) \\
-U_{hh}^*         & = u(y_1(h) - (y_1(h) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(h)) + \\
-                 & \delta (p (1 - p) U_{lh, upper} + (1 - 2p + 2p^2) U_{hh}^*) \\
-\\
-V_{hh, upper}    & = v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - v(y_2(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) V_{hh, upper} + p (1 - p) V_{lh}^* + p (1 - p) V_{hl, upper}) \\
-0                & = u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - u(y_1(h)) + \\
-                 & \delta p (1 - p) U_{lh}^* \\
-V_{lh}^*         & = v(y_2(h) + (y_1(l) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - v(y_2(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) V_{hh, upper} + p (1 - p) V_{lh}^* + p (1 - p) V_{hl, upper}) \\
-U_{lh}^*         & = u(y_1(l) - (y_1(l) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - u(y_1(l)) + \\
-                 & \delta p (1 - p) U_{lh}^* \\
-\\
-0                & = v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - v(y_2(h)) + \\
-                 & \delta p (1 - p) V_{hl}^* \\
-U_{hh, upper}    & = u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - u(y_1(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) U_{hh, upper} + p (1 - p) U_{hl}^* + p (1 - p) U_{lh, upper}) \\
-V_{hl}^*         & = v(y_2(l) + (y_1(h) - y_2(l) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - v(y_2(l)) + \\
-                 & \delta p (1 - p) V_{hl}^* \\
-U_{hl}^*         & = u(y_1(h) - (y_1(h) - y_2(l) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - u(y_1(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) U_{hh, upper} + p (1 - p) U_{hl}^* + p (1 - p) U_{lh, upper}) \\
-\\
-V_{hl, upper}    & = v(y_2(l) + (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(l)) + \\
-                 & \delta ((1 - 2p + 2p^2) V_{hh}^{**} + p (1 - p) V_{hl, upper}) \\
-0                & = u(y_1(h) - (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) U_{hh}^{**} + p (1 - p) U_{lh, upper}) \\
-V_{hh}^{**}      & = v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(h)) + \\
-                 & \delta (p (1 - p) V_{hl, upper} + (1 - 2p + 2p^2) V_{hh}^{**}) \\
-U_{hh}^{**}      & = u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(h)) + \\
-                 & \delta (p (1 - p) U_{lh, upper} + (1 - 2p + 2p^2) U_{hh}^{**}) \\
-\end{aligned}$
-
-For the discounted surpluses at the interior of intervals, these relationships can be obtained:
-
-$\begin{aligned}
-V_{hh}^*         & = \frac{v(y_2(h) + (y_1(h) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h)) + \delta p (1 - p) V_{hl, upper}}{1 - \delta (1 - 2p + 2p^2)} \\
-U_{hh}^*         & = \frac{u(y_1(h) - (y_1(h) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(h)) + \delta p (1 - p) U_{lh, upper}}{1 - \delta (1 - 2p + 2p^2)} \\
-V_{lh}^*         & = \frac{v(y_2(h) + (y_1(l) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - v(y_2(h)) + \delta ((1 - 2p + 2p^2) V_{hh, upper} + p (1 - p) V_{hl, upper})}{1 - \delta p (1 - p)} \\
-U_{lh}^*         & = \frac{u(y_1(l) - (y_1(l) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - u(y_1(l))}{1 - \delta p (1 - p)} \\
-V_{hl}^*         & = \frac{v(y_2(l) + (y_1(h) - y_2(l) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - v(y_2(l))}{1 - \delta p ( 1 - p)} \\
-U_{hl}^*         & = \frac{u(y_1(h) - (y_1(h) - y_2(l) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - u(y_1(h)) + \delta ((1 - 2p + 2p^2) U_{hh, upper} + p (1 - p) U_{lh, upper})}{1 - \delta p (1 - p)} \\
-V_{hh}^{**}      & = \frac{v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(h)) + \delta p (1 - p) V_{hl, upper}}{1 - \delta (1 - 2p + 2p^2)} \\
-U_{hh}^{**}      & = \frac{u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(h)) + \delta p (1 - p) U_{lh, upper}}{1 - \delta (1 - 2p + 2p^2)} \\
-\end{aligned}$
-
-Oh man this is A LOT!!!
-Finally I can define the function to solve this system of equations:
-
-```{r}
-# For the case where there are overlaps, solve end-points and surpluses at these points
-
-overlap <- function(x, delta, y_l, y_h, p){
-  # x <- c(lambda_{lh, upper}, lambda_{hh, lower}, lambda_{hh, upper}, lambda_{hl, lower}, 
-  #         U_{lh, upper}, V_{hh, upper}, U_{hh, upper}, V_{hl, upper})
-  # First I derive the discounted surpluses at the interior of intervals
-  V_hh_star  <- (v(y_h + (y_h - y_h * x[1]) / (1 + x[1])) - v(y_h) + 
-                 delta * (p - p^2) * x[8]) / (1 - delta * (1 - 2 * p + 2 * p^2))
-  U_hh_star  <- (u(y_h - (y_h - y_h * x[1]) / (1 + x[1])) - u(y_h) + 
-                 delta * (p - p^2) * x[5]) / (1 - delta * (1 - 2 * p + 2 * p^2))
-
-  V_lh_star  <- (v(y_h + (y_l - y_h * x[2]) / (1 + x[2])) - v(y_h) + 
-                 delta * ((1 - 2 * p + 2 * p^2) * x[6] + (p - p^2) * x[8])) / (1 - delta * (p - p^2))
-  U_lh_star  <- (u(y_l - (y_l - y_h * x[2]) / (1 + x[2])) - u(y_l)) / (1 - delta * (p - p^2))
-
-  V_hl_star  <- (v(y_l + (y_h - y_l * x[3]) / (1 + x[3])) - v(y_l)) / (1 - delta * (p - p^2))
-  U_hl_star  <- (u(y_h - (y_h - y_l * x[3]) / (1 + x[3])) - u(y_h) + 
-                 delta * ((1 - 2 * p + 2 * p^2) * x[7] + (p - p^2) * x[5])) / (1 - delta * (p - p^2))
-  
-  V_hh_2star <- (v(y_h + (y_h - y_h * x[4]) / (1 + x[4])) - v(y_h) + 
-                 delta * (p - p^2) * x[8]) / (1 - delta * (1 - 2 * p + 2 * p^2))
-  U_hh_2star <- (u(y_h - (y_h - y_h * x[4]) / (1 + x[4])) - u(y_h) + 
-                 delta * (p - p^2) * x[5]) / (1 - delta * (1 - 2 * p + 2 * p^2))
-
-
-  y <- numeric(8)
-  y[1] <- v(y_h + (y_l - y_h * x[1]) / (1 + x[1])) - v(y_h) + 
-            delta * ((1 - 2 * p + 2 * p^2) * V_hh_star + (p - p^2) * x[8])
-  y[2] <- u(y_l - (y_l - y_h * x[1]) / (1 + x[1])) - u(y_l) + 
-            delta * ((1 - 2 * p + 2 * p^2) * U_hh_star + (p - p^2) * x[5]) - x[5]
-
-  y[3] <- v(y_h + (y_h - y_h * x[2]) / (1 + x[2])) - v(y_h) + 
-            delta * ((1 - p + p^2) * x[6] + (p - p^2) * V_lh_star + (p - p^2) * x[8])     - x[6]
-  y[4] <- u(y_h - (y_h - y_h * x[2]) / (1 + x[2])) - u(y_h) + 
-            delta * (p - p^2) * U_lh_star
-
-  y[5] <- v(y_h + (y_h - y_h * x[3]) / (1 + x[3])) - v(y_h) + 
-            delta * (p - p^2) * V_hl_star
-  y[6] <- u(y_h - (y_h - y_h * x[3]) / (1 + x[3])) - u(y_h) + 
-            delta * ((1 - p + p^2) * x[7] + (p - p^2) * U_hl_star + (p - p^2) * x[5])     - x[7]
-
-  y[7] <- v(y_l + (y_h - y_l * x[4]) / (1 + x[4])) - v(y_l) + 
-            delta * ((1 - 2 * p + 2 * p^2) * V_hh_2star + (p - p^2) * x[8]) - x[8]
-  y[8] <- u(y_h - (y_h - y_l * x[4]) / (1 + x[4])) - u(y_h) + 
-            delta * ((1 - 2 * p + 2 * p^2) * U_hh_2star + (p - p^2) * x[5])
-  return(y)
-}
-
-```
-
-Given this function to solve each end-point, I obtain these end-points in this region, and the cutoff between overlapping region and first-best region ($\delta_3$).
-
-```{r, warning = FALSE}
-
-delta_vals <- seq(0.80, 0.999, by = 0.0001)
-lambda_lh_upper_vals_overlap <- numeric(length(delta_vals))
-lambda_hh_lower_vals_overlap <- numeric(length(delta_vals))
-lambda_hh_upper_vals_overlap <- numeric(length(delta_vals))
-lambda_hl_lower_vals_overlap <- numeric(length(delta_vals))
-same_as_autarky <- numeric(length(delta_vals))
-x_start <- rep((y_l + y_h) / 2, 8)
-for (delta in 1:length(delta_vals)){
-  overlap_solutions <- nleqslv(x_start, 
-                               overlap, 
-                               delta = delta_vals[delta],
-                               y_l = y_l, 
-                               y_h = y_h, 
-                               p = p)$x
-  lambda_lh_upper_vals_overlap[delta] <- overlap_solutions[1]
-  lambda_hh_lower_vals_overlap[delta] <- overlap_solutions[2]
-  lambda_hh_upper_vals_overlap[delta] <- overlap_solutions[3]
-  lambda_hl_lower_vals_overlap[delta] <- overlap_solutions[4]
-}
-
-delta_3 <- delta_vals[min(which(lambda_lh_upper_vals_overlap
-                        >= lambda_hl_lower_vals_overlap))]
-
-
-```
-
-### Case 4: First-best case
-
-To calculate the end-points of the intervals, evaluate profits at the following end-points:
-
-* $\lambda_{lh, upper}$, at which the discounted surplus of 2 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$ with probabilities $1$.
-* $\lambda_{hh, lower}$, at which the discounted surplus of 1 is 0 and the next-period ratio of marginal utilities are $\lambda_{hh, lower}$, $\lambda_{ll, lower}$, and $\lambda_{hl, lower}$ with probabilities $(1-p)$, $p^2$, and $p(1-p)$, respectively.
-* $\lambda_{hh, upper}$, at which the discounted surplus of 2 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_{hh, upper}$, and $\lambda_{ll, upper}$ with probabilities $p(1-p)$, $(1-p)$, and $p^2$, respectively.
-* $\lambda_{hl, lower}$, at which the discounted surplus of 1 is 0 and the next-period ratio of marginal utilities are $\lambda_{hl, lower}$ with probabilities $1$.
-
-Here, I define the discounted surpluses at the interior of intervals as the followings:
-
-* $U_{hh}^*, V_{hh}^*$:           discounted surpluses when income realization is \{High, High\} and the ratio of marginal utilities is $\lambda_{lh, upper}$,
-* $U_{hl}^*, V_{hl}^*$:           discounted surpluses when income realization is \{High, Low\}  and the ratio of marginal utilities is $\lambda_{lh, upper}$,
-* $U_{lh}^{**}, V_{lh}^{**}$:     discounted surpluses when income realization is \{Low, High\}  and the ratio of marginal utilities is $\lambda_{hh, lower}$,
-* $U_{hl}^{***}, V_{hl}^{***}$:   discounted surpluses when income realization is \{Low, High\}  and the ratio of marginal utilities is $\lambda_{hh, upper}$, and 
-* $U_{hh}^{****}, V_{hh}^{****}$: discounted surpluses when income realization is \{High, High\} and the ratio of marginal utilities is $\lambda_{hl, lower}$.
-* $U_{lh}^{****}, V_{lh}^{****}$: discounted surpluses when income realization is \{Low, High\}  and the ratio of marginal utilities is $\lambda_{hl, lower}$.
-
-Then, I can write down the conditions:
-
-$\begin{aligned}
-0                & = v(y_2(h) + (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) V_{hh}^{*} + p (1 - p) V_{hl}^{*}) \\
-U_{lh, upper}    & = u(y_1(l) - (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(l)) + \\
-                 & \delta ((1 - 2p + 2p^2) U_{hh}^{*} + p (1 - p) U_{hl}^{*} + p (1 - p) U_{lh, upper}) \\
-V_{hh}^*         & = v(y_2(h) + (y_1(h) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) V_{hh}^{*} + p (1 - p) V_{hl}^{*}) \\
-U_{hh}^*         & = u(y_1(h) - (y_1(h) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) U_{hh}^{*} + p (1 - p) U_{hl}^{*} + p (1 - p) U_{lh, upper}) \\
-V_{hl}^*         & = v(y_2(l) + (y_1(h) - y_2(l) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(l)) + \\
-                 & \delta ((1 - 2p + 2p^2) V_{hh}^{*} + p (1 - p) V_{hl}^{*}) \\
-U_{hl}^*         & = u(y_1(h) - (y_1(h) - y_2(l) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) U_{hh}^{*} + p (1 - p) U_{hl}^{*} + p (1 - p) U_{lh, upper}) \\
-\\
-V_{hh, upper}    & = v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - v(y_2(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) V_{hh, upper} + p (1 - p) V_{lh}^{**} + p (1 - p) V_{hl, upper}) \\
-0                & = u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - u(y_1(h)) + \\
-                 & \delta p (1 - p) U_{lh}^{**} \\
-V_{lh}^{**}      & = v(y_2(h) + (y_1(l) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - v(y_2(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) V_{hh, upper} + p (1 - p) V_{lh}^{**} + p (1 - p) V_{hl, upper}) \\
-U_{lh}^{**}      & = u(y_1(l) - (y_1(l) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - u(y_1(l)) + \\
-                 & \delta p (1 - p) U_{lh}^{**} \\
-\\
-0                & = v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - v(y_2(h)) + \\
-                 & \delta p (1 - p) V_{hl}^{***} \\
-U_{hh, upper}    & = u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - u(y_1(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) U_{hh, upper} + p (1 - p) U_{hl}^{***} + p (1 - p) U_{lh, upper}) \\
-V_{hl}^{***}     & = v(y_2(l) + (y_1(h) - y_2(l) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - v(y_2(l)) + \\
-                 & \delta p (1 - p) V_{hl}^* \\
-U_{hl}^{***}     & = u(y_1(h) - (y_1(h) - y_2(l) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - u(y_1(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) U_{hh, upper} + p (1 - p) U_{hl}^* + p (1 - p) U_{lh, upper}) \\
-\\
-V_{hl, upper}    & = v(y_2(l) + (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(l)) + \\
-                 & \delta ((1 - 2p + 2p^2) V_{hh}^{****} + p (1 - p) V_{lh}^{****} + p (1 - p) V_{hl, upper}) \\
-0                & = u(y_1(h) - (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) U_{hh}^{****} + p (1 - p) U_{lh}^{****}) \\
-V_{hh}^{****}    & = v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) V_{hh}^{****} + p (1 - p) V_{lh}^{****} + p (1 - p) V_{hl, upper}) \\
-U_{hh}^{****}    & = u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) U_{hh}^{****} + p (1 - p) U_{lh}^{****}) \\
-V_{lh}^{****}    & = v(y_2(h) + (y_1(l) - y_2(h) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(h)) + \\
-                 & \delta ((1 - 2p + 2p^2) V_{hh}^{****} + p (1 - p) V_{lh}^{****} + p (1 - p) V_{hl, upper}) \\
-U_{lh}^{****}    & = u(y_1(l) - (y_1(l) - y_2(h) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(l)) + \\
-                 & \delta ((1 - 2p + 2p^2) U_{hh}^{****} + p (1 - p) U_{lh}^{****})
-\end{aligned}$
-
-For the discounted surpluses at the interior of intervals, these relationships can be obtained (notice that some of the future expected surpluses take the same form due to unchanged $\lambda$'s):
-
-$\begin{aligned}
-  V_{hh}^*      &= v(y_2(h) + (y_1(h) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h)) - \\
-                &(v(y_2(h) + (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h))) \\
-  U_{hh}^*      &= u(y_1(h) - (y_1(h) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(h)) + \\
-                &(U_{lh, upper} - (u(y_1(l) - (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(l)))) \\
-  V_{hl}^*      &= v(y_2(l) + (y_1(h) - y_2(l) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(l)) - \\
-                &(v(y_2(h) + (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h))) \\
-  U_{hl}^*      &= u(y_1(h) - (y_1(h) - y_2(l) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(h)) + \\
-                &(U_{lh, upper} - (u(y_1(l) - (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(l)))) \\
-  \\
-  V_{lh}^{**}   &= v(y_2(h) + (y_1(l) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - v(y_2(h)) + \\
-                &(V_{hh, upper} - (v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - v(y_2(h))))  \\
-  U_{lh}^{**}   &= u(y_1(l) - (y_1(l) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - u(y_1(l)) - \\
-                &(u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - u(y_1(h))) \\
-  \\
-  V_{hl}^{***}  &= v(y_2(l) + (y_1(h) - y_2(l) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - v(y_2(l)) - \\
-                &(v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - v(y_2(h))) \\
-  U_{hl}^{***}  &= u(y_1(h) - (y_1(h) - y_2(l) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - u(y_1(h)) + \\
-                &(U_{hh, upper} - (u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - u(y_1(h)))) \\
-  \\
-  V_{hh}^{****} &= v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(h)) + \\
-                &(V_{hl, upper} - (v(y_2(l) + (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(l)))) \\
-  U_{hh}^{****} &= u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(h)) - \\
-                &(u(y_1(h) - (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(h))) \\
-  V_{lh}^{****} &= v(y_2(h) + (y_1(l) - y_2(h) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(h)) + \\
-                &(V_{hl, upper} - (v(y_2(l) + (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(l)))) \\
-  U_{lh}^{****} &= u(y_1(l) - (y_1(l) - y_2(h) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(l)) - \\
-                &(u(y_1(h) - (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(h)))
-\end{aligned}$
-
-The following function solves this system of equations:
-
-```{r}
-# For the case where first best can be achieved, solve end-points and surpluses at these points
-
-first_best <- function(x, delta, y_l, y_h, p){
-  # x <- c(lambda_{lh, upper}, lambda_{hh, lower}, lambda_{hh, upper}, lambda_{hl, lower}, 
-  #       U_{lh, upper}, V_{hh, upper}, U_{hh, upper}, V_{hl, upper})
-  # First I derive the discounted surpluses at the interior of intervals
-
-  V_hh_star  = v(y_h + (y_h - y_h * x[1]) / (1 + x[1])) - v(y_h) -
-                (v(y_h + (y_l - y_h * x[1]) / (1 + x[1])) - v(y_h))
-  U_hh_star  = u(y_h - (y_h - y_h * x[1]) / (1 + x[1])) - u(y_h) + 
-                (x[5] - (u(y_l - (y_l - y_h * x[1]) / (1 + x[1])) - u(y_l)))
-  V_hl_star  = v(y_l + (y_h - y_l * x[1]) / (1 + x[1])) - v(y_l) -
-                (v(y_h + (y_l - y_h * x[1]) / (1 + x[1])) - v(y_h))
-  U_hl_star  = u(y_h - (y_h - y_l * x[1]) / (1 + x[1])) - u(y_h) +
-                (x[5] - (u(y_l - (y_l - y_h * x[1]) / (1 + x[1])) - u(y_l)))
-  V_lh_2star = v(y_h + (y_l - y_h * x[2]) / (1 + x[2])) - v(y_h) + 
-                (x[6] - (v(y_h + (y_h - y_h * x[2]) / (1 + x[2])) - v(y_h))) 
-  U_lh_2star = u(y_l - (y_l - y_h * x[2]) / (1 + x[2])) - u(y_l) -
-                (u(y_h - (y_h - y_h * x[2]) / (1 + x[2])) - u(y_h))
-  V_hl_3star = v(y_l + (y_h - y_l * x[3]) / (1 + x[3])) - v(y_l) -
-                (v(y_h + (y_h - y_h * x[3]) / (1 + x[3])) - v(y_h))
-  U_hl_3star = u(y_h - (y_h - y_l * x[3]) / (1 + x[3])) - u(y_h) +
-                (x[7] - (u(y_h - (y_h - y_h * x[3]) / (1 + x[3])) - u(y_h)))
-  V_hh_4star = v(y_h + (y_h - y_h * x[4]) / (1 + x[4])) - v(y_h) +
-                (x[8] - (v(y_l + (y_h - y_l * x[4]) / (1 + x[4])) - v(y_l)))
-  U_hh_4star = u(y_h - (y_h - y_h * x[4]) / (1 + x[4])) - u(y_h) -
-                (u(y_h - (y_h - y_l * x[4]) / (1 + x[4])) - u(y_h))
-  V_lh_4star = v(y_h + (y_l - y_h * x[4]) / (1 + x[4])) - v(y_h) +
-                (x[8] - (v(y_l + (y_h - y_l * x[4]) / (1 + x[4])) - v(y_l)))
-  U_lh_4star = u(y_l - (y_l - y_h * x[4]) / (1 + x[4])) - u(y_l) - 
-                (u(y_h - (y_h - y_l * x[4]) / (1 + x[4])) - u(y_h))
-
-
-  y <- numeric(8)
-  y[1] <- v(y_h + (y_l - y_h * x[1]) / (1 + x[1])) - v(y_h) + 
-            delta * ((1 - 2 * p + 2 * p^2) * V_hh_star + (p - p^2) * V_hl_star)
-  y[2] <- u(y_l - (y_l - y_h * x[1]) / (1 + x[1])) - u(y_l) + 
-            delta * ((1 - 2 * p + 2 * p^2) * U_hh_star + (p - p^2) * U_hl_star + 
-                     (p - p^2) * x[5]) - x[5]
-  y[3] <- v(y_h + (y_h - y_h * x[2]) / (1 + x[2])) - v(y_h) + 
-            delta * ((1 - 2 * p + 2 * p^2) * x[6] + (p - p^2) * x[8] + 
-                     (p - p^2) * V_lh_2star) - x[6]
-  y[4] <- u(y_h - (y_h - y_h * x[2]) / (1 + x[2])) - u(y_h) + 
-            delta * (p - p^2) * U_lh_2star
-  y[5] <- v(y_h + (y_h - y_h * x[3]) / (1 + x[3])) - v(y_h) + 
-            delta * (p - p^2) * V_hl_3star
-  y[6] <- u(y_h - (y_h - y_h * x[3]) / (1 + x[3])) - u(y_h) + 
-            delta * ((1 - 2 * p + 2 * p^2) * x[5] + (p - p^2) * x[7] + 
-                     (p - p^2) * U_hl_3star) - x[7]
-  y[7] <- v(y_l + (y_h - y_l * x[4]) / (1 + x[4])) - v(y_l) + 
-            delta * ((1 - 2 * p + 2 * p^2) * V_hh_4star + (p - p^2) * V_lh_4star + 
-                     (p - p^2) * x[8]) - x[8]
-  y[8] <- u(y_h - (y_h - y_l * x[4]) / (1 + x[4])) - u(y_h) + 
-            delta * ((1 - 2 * p + 2 * p^2) * U_hh_4star + (p - p^2) * U_lh_4star)
-  return(y)
-}
-
-```
-
-Given this function to solve each end-point, I obtain these end-points in this region:
-
-```{r, warning = FALSE}
-
-delta_vals <- seq(0.80, 0.999, by = 0.0001)
-lambda_lh_upper_vals_first_best <- numeric(length(delta_vals))
-lambda_hh_lower_vals_first_best <- numeric(length(delta_vals))
-lambda_hh_upper_vals_first_best <- numeric(length(delta_vals))
-lambda_hl_lower_vals_first_best <- numeric(length(delta_vals))
-same_as_autarky <- numeric(length(delta_vals))
-x_start <- rep((y_l + y_h) / 2, 8)
-for (delta in 1:length(delta_vals)){
-  first_best_solutions <- nleqslv(x_start, 
-                               first_best, 
-                               delta = delta_vals[delta],
-                               y_l = y_l, 
-                               y_h = y_h, 
-                               p = p)$x
-  lambda_lh_upper_vals_first_best[delta] <- first_best_solutions[1]
-  lambda_hh_lower_vals_first_best[delta] <- first_best_solutions[2]
-  lambda_hh_upper_vals_first_best[delta] <- first_best_solutions[3]
-  lambda_hl_lower_vals_first_best[delta] <- first_best_solutions[4]
-}
-
-```
-
-### Replicate the figure
-With the information at hand, I replicate Figure 1 in the original paper:
-
-```{r, warning = FALSE}
-
-delta_vals <- seq(0.80, 0.999, by = 0.0001)
-
-lambda_lh_upper_vals <- numeric(length(delta_vals))
-lambda_hh_lower_vals <- numeric(length(delta_vals))
-lambda_hh_upper_vals <- numeric(length(delta_vals))
-lambda_hl_lower_vals <- numeric(length(delta_vals))
-x_start <- rep((y_l + y_h) / 2, 8)
-for (delta in 1:length(delta_vals)){
-  if (delta_vals[delta] <= delta_1){
-    lambda_lh_upper_vals[delta] <- y_l / y_h 
-    lambda_hh_lower_vals[delta] <- 1
-    lambda_hh_upper_vals[delta] <- 1
-    lambda_hl_lower_vals[delta] <- y_h / y_l 
-  } else if (delta_vals[delta] > delta_1 & delta_vals[delta] <= delta_2){
-    lambda_lh_upper_vals[delta] <- lambda_lh_upper_vals_no_overlap[delta]
-    lambda_hh_lower_vals[delta] <- lambda_hh_lower_vals_no_overlap[delta]
-    lambda_hh_upper_vals[delta] <- lambda_hh_upper_vals_no_overlap[delta]
-    lambda_hl_lower_vals[delta] <- lambda_hl_lower_vals_no_overlap[delta]
-  } else if (delta_vals[delta] > delta_2 & delta_vals[delta] <= delta_3){
-    lambda_lh_upper_vals[delta] <- lambda_lh_upper_vals_overlap[delta]
-    lambda_hh_lower_vals[delta] <- lambda_hh_lower_vals_overlap[delta]
-    lambda_hh_upper_vals[delta] <- lambda_hh_upper_vals_overlap[delta]
-    lambda_hl_lower_vals[delta] <- lambda_hl_lower_vals_overlap[delta]
-  } else {
-    lambda_lh_upper_vals[delta] <- lambda_lh_upper_vals_first_best[delta]
-    lambda_hh_lower_vals[delta] <- lambda_hh_lower_vals_first_best[delta]
-    lambda_hh_upper_vals[delta] <- lambda_hh_upper_vals_first_best[delta]
-    lambda_hl_lower_vals[delta] <- lambda_hl_lower_vals_first_best[delta]
+# Define utility function
+util <- function(c, sigma) {
+  if (sigma != 1) {
+    output = (c ^ (1 - sigma) - 1) / (1 - sigma)
+  } else if (sigma == 1) {
+    output = log(c)
   }
+  return(output)
+}
+util_prime <- function(c, sigma) c ^ (- sigma)
+  
+# income shocks and their transition probabilities of the household
+inc1 <- c(2/3, 4/3)
+P1 <- matrix(rep(c(0.1, 0.9), 2), nrow = 2, byrow = TRUE)
+
+# income shocks and their transition probabilities of the village
+inc2 <- c(2/3, 4/3)
+P2 <- matrix(rep(c(0.1, 0.9), 2), nrow = 2, byrow = TRUE)
+
+# transition super-matrix of income shocks
+R <- kronecker(P2, P1)
+
+# number of states
+# (number of income states for a household times
+# number of income states for the village)
+S <- length(inc1) * length(inc2)
+
+# Income matrix
+# (col 1: HH income, col 2: village income)
+inc_mat <- as.matrix(expand.grid(inc1, inc2))
+
+# Aggregate income in each state
+inc_ag <- rowSums(inc_mat)
+
+# Grid of time discount factors
+delta_seq <- seq(0.8, 0.999, by = 0.002)
+
+```
+
+```{r}
+output <- readRDS("RDSfiles/laczo2015_dynamic_lc_output.rds")
+```
+
+```{r}
+
+# Plot figure =========================
+x_int_array = array(NA, dim = c(S, 2, length(delta_seq)))
+for (i in seq_along(delta_seq)) {
+  x_int_array[,,i] <- output[[i]][[5]]
 }
 
-lambda_lh_lower_vals <- rep(y_l / y_h, length(delta_vals))
-lambda_hl_upper_vals <- rep(y_h / y_l, length(delta_vals))
-
-ggplot() +
-  geom_line(aes(delta_vals, log(lambda_lh_lower_vals), color="a")) + 
-  geom_line(aes(delta_vals, log(lambda_lh_upper_vals), color="b")) + 
-  geom_line(aes(delta_vals, log(lambda_hh_lower_vals), color="c")) + 
-  geom_line(aes(delta_vals, log(lambda_hh_upper_vals), color="d")) +
-  geom_line(aes(delta_vals, log(lambda_hl_lower_vals), color="e")) +
-  geom_line(aes(delta_vals, log(lambda_hl_upper_vals), color="f")) +
-  coord_cartesian(xlim = c(0.8, 1.0)) +
-  geom_ribbon(aes(x = delta_vals, 
-                  ymin = log(lambda_lh_lower_vals),
-                  ymax = log(lambda_lh_upper_vals)),
+dynamic_lc_plot <- ggplot() +
+  geom_line(aes(delta_seq, log(x_int_array[1,1,]), color = "a")) + 
+  geom_line(aes(delta_seq, log(x_int_array[1,2,]), color = "b")) + 
+  geom_line(aes(delta_seq, log(x_int_array[2,1,]), color = "c")) + 
+  geom_line(aes(delta_seq, log(x_int_array[2,2,]), color = "d")) +
+  geom_line(aes(delta_seq, log(x_int_array[3,1,]), color = "e")) +
+  geom_line(aes(delta_seq, log(x_int_array[3,2,]), color = "f")) +
+  geom_line(aes(delta_seq, log(x_int_array[4,1,]), color = "g")) +
+  geom_line(aes(delta_seq, log(x_int_array[4,2,]), color = "h")) +
+  coord_cartesian(xlim = c(0.8, 1.0), ylim = c(log(inc1[1] / inc1[2]), log(inc1[2] / inc1[1]))) +
+  geom_ribbon(aes(x = delta_seq,
+                  ymin = log(x_int_array[1,1,]),
+                  ymax = log(x_int_array[1,2,])),
                   fill = "blue", alpha = 0.2) +
-  geom_ribbon(aes(x = delta_vals,
-                  ymin = log(lambda_hh_lower_vals),
-                  ymax = log(lambda_hh_upper_vals)),
+  geom_ribbon(aes(x = delta_seq,
+                  ymin = log(x_int_array[2,1,]),
+                  ymax = log(x_int_array[2,2,])),
                   fill = "red", alpha = 0.2) +
-  geom_ribbon(aes(x = delta_vals,
-                  ymin = log(lambda_hl_lower_vals),
-                  ymax = log(lambda_hl_upper_vals)),
-                  fill = "green", alpha = 0.2) + 
-  scale_color_manual(name = "End-points", 
-                     values = c("blue", "purple", "brown", "red", "yellow", "green"), 
-                     labels = c("lambda_lh_lower", 
-                                "lambda_lh_upper",
-                                "lambda_hh_lower",
-                                "lambda_hh_upper",
-                                "lambda_hl_lower",
-                                "lambda_hl_upper")) +
+  geom_ribbon(aes(x = delta_seq,
+                  ymin = log(x_int_array[3,1,]),
+                  ymax = log(x_int_array[3,2,])),
+                  fill = "green", alpha = 0.2) +
+  geom_ribbon(aes(x = delta_seq,
+                  ymin = log(x_int_array[4,1,]),
+                  ymax = log(x_int_array[4,2,])),
+                  fill = "yellow", alpha = 0.2) +
+  scale_color_manual(
+    name = "End-points", 
+    values = c(
+      "blue",
+      "purple",
+      "brown",
+      "red",
+      "yellow",
+      "green",
+      "orange",
+      "gray"
+      ), 
+    labels = unname(TeX(c(
+      "$\\underline{x}_{ll}$",
+      "$\\bar{x}_{ll}$",
+      "$\\underline{x}_{hl}$",
+      "$\\bar{x}_{hl}$",
+      "$\\underline{x}_{lh}$",
+      "$\\bar{x}_{lh}$",
+      "$\\underline{x}_{hh}$",
+      "$\\bar{x}_{hh}$"
+      )))
+    ) +
   xlab("Discount factor (delta)") +
-  ylab("log of the ratio of marginal utilities (lambda)")
+  ylab("log of the relative Pareto weights (x)")
+
+dynamic_lc_plot
 ```
 
-I could replicate the figure!
-Yay!!
+Here I generate random income shocks, based on the income process specified above.
+I consider 10-period data.
 
-The cutoffs of the regions are $\delta_1 = `r delta_1`$, $\delta_2 = `r delta_2`$, and $\delta_3 = `r delta_3`$.
+```{r}
+n <- 10
 
-## Fun Exercise: How does the ratio of marginal utilities change over time in response to income shocks?
+set.seed(35)
 
-Now that we could replicate the figure in the original paper, I will next see how $\lambda$ changes over time in response to income shocks.
-This is the function to create the figure:
+# Sequence of income shocks
+income_realization <- c(1, 2, 3, 4)
+income_realization_label <- c("Low, Low", "High, Low", "Low, High", "High, High")
+income_seq <- sample(income_realization, 
+                     size = n,
+                     replace = TRUE,
+                     prob = R[1,])
 
-```{r, warning = FALSE}
+inc1_realization <- inc_mat[income_seq, 1]
+inc2_realization <- inc_mat[income_seq, 2]
+(income_realization_vec <- income_realization_label[income_seq])
+```
 
-lambda_change_plot <- function(lambda_init, delta, n){
+This is the function to create summary tables and figures later:
 
+```{r}
 
-  # Sequence of income shocks
-  income_realization <- c(1, 2, 3, 4)
-  income_realization_label <- c("High, High", "High, Low", "Low, High", "Low, Low")
-  income_seq <- sample(income_realization, 
-                       size = n,
-                       replace = TRUE,
-                       prob = c((1 - p)^2,
-                                p * (1 - p),
-                                p * (1 - p),
-                                p^2))
-
-  # Sequence of the ratios of marginal utilities under autarky 
-  xi_seq <- numeric(n)
-  income_realization_label_seq <- rep("", n)
-  for (i in 1:n){
-    xi_seq[i] <- 1 * (income_seq[i] == 1) + 
-                  (y_h / y_l) * (income_seq[i] == 2) +
-                  (y_l / y_h) * (income_seq[i] == 3) +
-                  1 * (income_seq[i] == 4)
-    income_realization_label_seq[i] <- income_realization_label[income_seq[i]]
-  }
+# Function to create output and figure ================
+create_plot_table <- function(delta_ind, lc_plot, x_int_array, dynamic = TRUE) {
   
-  # Given the initial lambda, derive the sequence of lambda's
+  delta <- delta_seq[delta_ind]
   
-  if (delta <= delta_1){
-    lambda_lh_upper <- y_l / y_h
-    lambda_hh_lower <- 1
-    lambda_hh_upper <- 1
-    lambda_hl_lower <- y_h / y_l
-  } else if (delta > delta_1 & delta <= delta_2){
-    no_overlap_solutions <- nleqslv(x_start, 
-                                    no_overlap, 
-                                    delta = delta,
-                                    y_l = y_l, 
-                                    y_h = y_h, 
-                                    p = p)$x
-    lambda_lh_upper <- no_overlap_solutions[1]
-    lambda_hh_lower <- no_overlap_solutions[2]
-    lambda_hh_upper <- no_overlap_solutions[3]
-    lambda_hl_lower <- no_overlap_solutions[4]
-  } else if (delta > delta_2 & delta <= delta_3) {
-    overlap_solutions <- nleqslv(x_start, 
-                                 overlap, 
-                                 delta = delta,
-                                 y_l = y_l, 
-                                 y_h = y_h, 
-                                 p = p)$x
-    lambda_lh_upper <- overlap_solutions[1]
-    lambda_hh_lower <- overlap_solutions[2]
-    lambda_hh_upper <- overlap_solutions[3]
-    lambda_hl_lower <- overlap_solutions[4]
-  } else {
-    first_best_solutions <- nleqslv(x_start, 
-                                 first_best, 
-                                 delta = delta,
-                                 y_l = y_l, 
-                                 y_h = y_h, 
-                                 p = p)$x
-    lambda_lh_upper <- first_best_solutions[1]
-    lambda_hh_lower <- first_best_solutions[2]
-    lambda_hh_upper <- first_best_solutions[3]
-    lambda_hl_lower <- first_best_solutions[4]
-  }
+  # Vector of relative Pareto weights
+  x_vec <- rep(NA, n + 1)
+  x_vec[1] <- 1
+  x_int_array_aut <- x_int_array[,,delta_ind]
   
-  lambda <- lambda_init
-  lambda_seq <- numeric(n)
-
-  if (delta <= delta_1){
-    lambda_seq <- xi_seq
-  } else if (delta > delta_1 & delta <= delta_2){
-    for (i in 1:n){
-      if (lambda >= lambda_hl_lower){
-        lambda_seq[i] <- lambda * (income_seq[i] == 2) +
-                        lambda_hh_upper * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda_lh_upper * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
-      } else if (lambda < lambda_hl_lower & lambda >= lambda_hh_upper){
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-                        lambda_hh_upper * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda_lh_upper * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
-      } else if (lambda < lambda_hh_upper & lambda >= lambda_hh_lower){
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-                        lambda * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda_lh_upper * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
-      } else if (lambda < lambda_hh_lower & lambda >= lambda_lh_upper){
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-                        lambda_hh_lower * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda_lh_upper * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
+  # Relative Pareto weights on the history of income realizations
+  if (dynamic == TRUE) {
+    for (t in seq(n)) {
+      x_int_temp <- x_int_array_aut[income_seq[t],] 
+      if (x_vec[t] < x_int_temp[1]) {
+        x_vec[t + 1] <- x_int_temp[1]
+      } else if (x_vec[t] > x_int_temp[2]) {
+        x_vec[t + 1] <- x_int_temp[2]
       } else {
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-                        lambda_hh_lower * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
-      }
-    }
-  } else if (delta > delta_2 & delta <= delta_3) {
-    for (i in 1:n){
-      if (lambda >= lambda_hh_upper){
-        lambda_seq[i] <- lambda * (income_seq[i] == 2) +
-                        lambda_hh_upper * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda_lh_upper * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
-      } else if (lambda < lambda_hh_upper & lambda >= lambda_hl_lower){
-        lambda_seq[i] <- lambda * (income_seq[i] == 2) +
-                        lambda * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda_lh_upper * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
-      } else if (lambda < lambda_hl_lower & lambda >= lambda_lh_upper){
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-                        lambda * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda_lh_upper * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
-      } else if (lambda < lambda_lh_upper & lambda >= lambda_hh_lower){
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-                        lambda * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
-      } else {
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-                        lambda_hh_lower * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
+        x_vec[t + 1] <- x_vec[t]
       }
     }
   } else {
-    for (i in 1:n){
-      if (lambda >= lambda_hh_upper){
-        lambda_seq[i] <- lambda * (income_seq[i] == 2) +
-                        lambda_hh_upper * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda_lh_upper * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
-      } else if (lambda < lambda_hh_upper & lambda >= lambda_lh_upper){
-        lambda_seq[i] <- lambda * (income_seq[i] == 2) +
-                        lambda * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda_lh_upper * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
-      } else if (lambda < lambda_lh_upper & lambda >= lambda_hl_lower){
-        lambda_seq[i] <- lambda * (income_seq[i] == 2) +
-                        lambda * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
-      } else if (lambda < lambda_hl_lower & lambda >= lambda_hh_lower){
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-                        lambda * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
+    for (t in seq(n)) {
+      x_int_temp <- x_int_array_aut[income_seq[t],] 
+      if (x_vec[1] < x_int_temp[1]) {
+        x_vec[t + 1] <- x_int_temp[1]
+      } else if (x_vec[1] > x_int_temp[2]) {
+        x_vec[t + 1] <- x_int_temp[2]
       } else {
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-                        lambda_hh_lower * (income_seq[i] == 1 | income_seq[i] == 4) +
-                        lambda * (income_seq[i] == 3)
-        lambda <- lambda_seq[i]
+        x_vec[t + 1] <- x_vec[1]
       }
     }
   }
-  # Sequence of net transfers (1 -> 2), income, and consumptions
-  transfer_seq <- numeric(n)
-  inc_seq_1 <- numeric(n)
-  inc_seq_2 <- numeric(n)
-  cons_seq_1 <- numeric(n)
-  cons_seq_2 <- numeric(n)
-  for (i in 1:n){
-    if (income_seq[i] == 1){
-      transfer_seq[i] <- (y_h - y_h * lambda_seq[i]) / (1 + lambda_seq[i])
-      inc_seq_1[i] <- y_h
-      inc_seq_2[i] <- y_h
-      cons_seq_1[i] <- y_h - transfer_seq[i]
-      cons_seq_2[i] <- y_h + transfer_seq[i]
-    } else if (income_seq[i] == 2) {
-      transfer_seq[i] <- (y_h - y_l * lambda_seq[i]) / (1 + lambda_seq[i])
-      inc_seq_1[i] <- y_h
-      inc_seq_2[i] <- y_l
-      cons_seq_1[i] <- y_h - transfer_seq[i]
-      cons_seq_2[i] <- y_l + transfer_seq[i]
-    } else if (income_seq[i] == 3) {
-      transfer_seq[i] <- (y_l - y_h * lambda_seq[i]) / (1 + lambda_seq[i])
-      inc_seq_1[i] <- y_l
-      inc_seq_2[i] <- y_h
-      cons_seq_1[i] <- y_l - transfer_seq[i]
-      cons_seq_2[i] <- y_h + transfer_seq[i]
-    } else {
-      transfer_seq[i] <- (y_l - y_l * lambda_seq[i]) / (1 + lambda_seq[i])
-      inc_seq_1[i] <- y_l
-      inc_seq_2[i] <- y_l
-      cons_seq_1[i] <- y_l - transfer_seq[i]
-      cons_seq_2[i] <- y_l + transfer_seq[i]
-    }
-  }
-  plot_test <- ggplot() +
-                geom_line(aes(delta_vals, log(lambda_lh_lower_vals), color="a")) + 
-                geom_line(aes(delta_vals, log(lambda_lh_upper_vals), color="b")) + 
-                geom_line(aes(delta_vals, log(lambda_hh_lower_vals), color="c")) + 
-                geom_line(aes(delta_vals, log(lambda_hh_upper_vals), color="d")) +
-                geom_line(aes(delta_vals, log(lambda_hl_lower_vals), color="e")) +
-                geom_line(aes(delta_vals, log(lambda_hl_upper_vals), color="f")) +
-                coord_cartesian(xlim = c(0.8, 1.0)) +
-
-                geom_ribbon(aes(x = delta_vals,
-                                ymin = log(lambda_lh_lower_vals),
-                                ymax = log(lambda_lh_upper_vals)),
-                                fill = "blue", alpha = 0.2) +
-                geom_ribbon(aes(x = delta_vals,
-                                ymin = log(lambda_hh_lower_vals),
-                                ymax = log(lambda_hh_upper_vals)),
-                                fill = "red", alpha = 0.2) +
-                geom_ribbon(aes(x = delta_vals,
-                                ymin = log(lambda_hl_lower_vals),
-                                ymax = log(lambda_hl_upper_vals)),
-                                fill = "green", alpha = 0.2) + 
-                geom_vline(xintercept = delta, color = "black", size = 0.8, alpha = 0.6) +
-                scale_color_manual(name = "End-points",
-                                   values = c("blue", "purple", "brown", "red", "yellow", "green"), 
-                                   labels = c("lambda_lh_lower",
-                                              "lambda_lh_upper",
-                                              "lambda_hh_lower",
-                                              "lambda_hh_upper",
-                                              "lambda_hl_lower",
-                                              "lambda_hl_upper")) +
-                xlab("Discount factor (delta)") +
-                ylab("log of the ratio of marginal utilities (lambda)") +
-                geom_point(aes(rep(delta, (n + 1)), c(log(lambda_init), log(lambda_seq)))) +
-                geom_label_repel(
-                  aes(rep(delta, (n + 1)), c(log(lambda_init), log(lambda_seq)), label = seq(0,n)),
-                  box.padding = 0.35, point.padding = 0.5)
   
-  result_table <- data.frame(cbind(seq(0,n), 
-                                   round(c(log(lambda_init), log(lambda_seq)), 3), 
-                                   c(NaN, income_realization_label_seq),
-                                   round(c(NaN, transfer_seq), 3),
-                                   round(c(NaN, cons_seq_1), 3),
-                                   round(c(NaN, cons_seq_2), 3)
-                                    ))
-  colnames(result_table) <- c("Period",
-                              "ln(lambda)",
-                              "Income shocks",
-                              "Net transfer (1 -> 2)",
-                              "Consumption (1)",
-                              "Consumption (2)")
-
-  summary_table <- matrix(c(mean(cons_seq_1),
-                            std(cons_seq_1),
-                            mean(cons_seq_2),
-                            std(cons_seq_2),
-                            mean(inc_seq_1),
-                            std(inc_seq_1),
-                            mean(inc_seq_2),
-                            std(inc_seq_2)),
-                          byrow = TRUE, ncol = 2)
-  summary_table <- round(summary_table, 3)
-  colnames(summary_table) <- c("Mean", "Std")
-  rownames(summary_table) <- c("Consumption (1)",
-                               "Consumption (2)",
-                               "Income (1)",
-                               "Income (2)")
-  return(list(plot_test, result_table, summary_table))
+  # Consumption and transfers, calculated based on x_vec
+  cons1_vec <- rep(NA, n + 1)
+  cons2_vec <- rep(NA, n + 1)
+  transfer_1_to_2 <- rep(NA, n + 1)
+  for (t in seq(2, n + 1)) {
+    f <- function(w) util_prime(inc_ag[income_seq[t - 1]] - w, sigma2) / util_prime(w, sigma1) - x_vec[t]
+    cons1_vec[t] <- uniroot(f, c(1e-6, (inc_ag[income_seq[t - 1]] - 1e-6)), tol = 1e-10, maxiter = 300)$root
+    cons2_vec[t] <- inc_ag[income_seq[t - 1]] - cons1_vec[t]
+    transfer_1_to_2[t] <- inc_mat[income_seq[t - 1], 1] - cons1_vec[t]
+  }
+  
+  # Output table
+  table_output <- tibble(
+    `Period` = seq(0, n),
+    `ln(x)` = log(x_vec),
+    `Income shocks` = c(NA, income_realization_vec),
+    `Net transfer (1 -> 2)` = transfer_1_to_2,
+    `Consumption (1)` = cons1_vec,
+    `Consumption (2)` = cons2_vec,
+    `Income (1)` = c(NA, inc1_realization),
+    `Income (2)` = c(NA, inc2_realization)
+  )
+  
+  # Output figure
+  plot_output <- lc_plot + 
+    geom_vline(xintercept = delta) +
+    geom_point(aes(rep(delta, n + 1), log(x_vec))) +
+    geom_label_repel(
+      aes(rep(delta, n + 1), log(x_vec)), label = seq(0, n),
+      box.padding = 0.35, point.padding = 0.5
+    )
+  
+  # Table of mean and SD of consumption and income
+  sum_table_output <- table_output %>% 
+    select(
+      c(
+        "Consumption (1)",
+        "Consumption (2)",
+        "Income (1)",
+        "Income (2)"
+      )
+    ) %>%
+    summarise_all(
+      list(
+        mean = function(x) mean(x, na.rm = TRUE),
+        sd = function(x) sd(x, na.rm = TRUE)
+        )
+      ) %>%
+    pivot_longer(everything(), names_to = "variable", values_to = "value") %>%
+    extract(variable, c("variable", "stat"),
+            regex = "(.*)(_mean|_sd)") %>%
+    pivot_wider(names_from = "stat", values_from = "value")
+  colnames(sum_table_output) <- c("", "Mean", "SD")
+  
+  return(list(table_output, plot_output, sum_table_output)) 
 }
 
 ```
 
-\newpage
-### Autarky region
+Below I consider risk-sharing in 4 different regions in turn by discount factor $\delta$:
+autarky region, non-overlapping region, overlapping region, and first-best region.
 
-First, let me try the autarky region.
+### Case 1: Autarky region
+
+Here I consider the autarky region, where no risk-sharing occurs.
 
 ```{r}
-n <- 10
-lambda_init <- exp(0)
-delta <- 0.85
-set.seed(1)
-result <- lambda_change_plot(lambda_init, delta, n)
-plot_figure <- result[1]
-result_table <- result[2]
-summary_table <- result[3]
-
-kable(result_table, caption = "Autarky region")
-plot_figure
+delta_ind <- 15
+(delta_aut <- delta_seq[delta_ind])
 ```
 
-There is no transfer between households and the ratio of marginal utilities fluctuates a lot in response to income shocks.
-
-### Non-overlapping region
-
-Now, I try and see the transition in the ratio of marginal utilities and consumptions in the non-overlapping region first.
+```{r}
+output_aut <- create_plot_table(delta_ind, dynamic_lc_plot, x_int_array)
+```
 
 ```{r}
-n <- 10
-lambda_init <- exp(0)
-delta <- 0.9
-set.seed(1)
-result <- lambda_change_plot(lambda_init, delta, n)
-plot_figure <- result[1]
-result_table <- result[2]
-summary_table <- result[3]
+table_aut <- output_aut[[1]]
+kable(table_aut, digits = 3)
+```
 
-kable(result_table, caption = "Non-overlapping region")
-plot_figure
+```{r}
+output_aut[[2]]
+```
+
+```{r}
+kable(output_aut[[3]], digits = 3)
+```
+
+As you can see from the table and figure, there is no transfer between households (ie. consumption and income perfectly covary) and the ratio of marginal utilities fluctuates a lot in response to income shocks.
+
+### Case 2: Non-overlapping region
+
+Now, I try and see the transition in the ratio of marginal utilities and consumptions in the non-overlapping region.
+
+```{r}
+delta_ind <- 50
+(delta_non_ol <- delta_seq[delta_ind])
+
+```
+
+```{r}
+output_non_ol <- create_plot_table(delta_ind, dynamic_lc_plot, x_int_array)
+```
+
+```{r}
+table_non_ol <- output_non_ol[[1]]
+kable(table_non_ol, digits = 3)
+```
+
+```{r}
+output_non_ol[[2]]
 ```
 
 It is interesting to see the path dependence of transfers:
-after receiving a bad shock, a household keeps to ``repay the loan'' by transferring to the other household even when the realized incomes are the same, until the other household receives a bad shock and she herself receives a good shock simultaneously.
-Also, I look at the mean and standard deviations of incomes and consumptions:
+after HH 1 receives a bad shock in period 1, a household keeps to "repay the loan" by transferring to HH 2 even when the realized incomes are the same (periods 2 and 3), until the other household receives a bad shock and she herself receives a good shock (period 4).
+
+Also, the table below shows that, while mean consumptions are similar to mean incomes, the fluctuation in consumptions are smaller than that of incomes.
+This is the benefit of risk sharing, although full insurance is not achieved since the relative Pareto weights fluctuates over time.
 
 ```{r}
-kable(summary_table, caption = "Non-overlapping region (summary statistics)")
+kable(output_non_ol[[3]], digits = 3)
 ```
 
-The table shows that while mean consumptions are similar to mean incomes, the fluctuation in consumptions are smaller than that of incomes.
-This is the benefit of risk sharing, although full insurance is not achieved since $\lambda$ fluctuates over time.
+### Case 3: Overlapping region
 
-### Overlapping region
-
-Next, I look at how $\lambda$ changes over time in the overlapping region:
+Next, I look at how the relative Pareto weights change over time in the overlapping region:
 
 ```{r}
-n <- 10
-lambda_init <- exp(0)
-delta <- 0.95
-set.seed(1)
-result <- lambda_change_plot(lambda_init, delta, n)
-plot_figure <- result[1]
-result_table <- result[2]
-summary_table <- result[3]
-
-kable(result_table, caption = "Overlapping region")
-plot_figure
+delta_ind <- 73
+(delta_ol <- delta_seq[delta_ind])
 ```
-
-Compared to the previous case, the fluctuation in the ratio of marginal utilities seem smaller.
-This reuslts in less fluctuating consumptions as the table shows.
 
 ```{r}
-kable(summary_table, caption = "Overlapping region (summary statistics)")
+output_ol <- create_plot_table(delta_ind, dynamic_lc_plot, x_int_array)
 ```
 
-### First-best region
+```{r}
+table_ol <- output_ol[[1]]
+kable(table_ol, digits = 3)
+```
+
+```{r}
+output_ol[[2]]
+```
+
+Compared to the previous case, the fluctuation in the ratio of marginal utilities is smaller.
+This results in less fluctuating consumption as the table below shows:
+
+```{r}
+kable(output_ol[[3]], digits = 3)
+```
+
+### Case 4: First-best region
 
 Finally, I try to see the transitions in the first-best region.
 
 ```{r}
-n <- 10
-lambda_init <- exp(0)
-delta <- 0.98
-set.seed(1)
-result <- lambda_change_plot(lambda_init, delta, n)
-plot_figure <- result[1]
-result_table <- result[2]
-summary_table <- result[3]
+delta_ind <- 99
+(delta_fb <- delta_seq[delta_ind])
+```
 
-kable(result_table, caption = "First-best region")
-plot_figure
+```{r}
+output_fb <- create_plot_table(delta_ind, dynamic_lc_plot, x_int_array)
+```
+
+```{r}
+table_fb <- output_fb[[1]]
+kable(table_fb, digits = 3)
+```
+
+```{r}
+output_fb[[2]]
 ```
 
 As the name of the region suggests, the ratio of marginal utilities stays at the initial position and never changes.
 This means that full insurance is achieved, although due to the aggregate shocks consumptions fluctuate as the table shows:
 
 ```{r}
-kable(summary_table, caption = "First-best region (summary statistics)")
+kable(output_fb[[3]], digits = 3)
 ```
 
-### Comparison with static limited commitment model (Coate & Ravallion (1993))
+## Comparison with static limited commitment model (Coate & Ravallion (1993))
 
-What is another fun exercise?
-A comparison with static limited commitment model!
+Here I compare how different risk-sharing schemes under dynamic limited commitment (@Ligon2002) and static limited commitment (@Coate1993).
+I show the similar figure to the one in @Ligon2002, but under static limited commitment.
+See [here](Laczo2015_code.html) for the code to generate this figure.
+
 In static limited commitment model, transfers do not depend on the history of states but only on the current state.
 Presumably this restricts the range of transfer contracts and thus weakens the performance of risk sharing.
 I try to see this numerically.
 
-Again, I need to begin from derivation of end-points.
-The update rule is derived by Ligon, Thomas, and Worrall (2002) (equation (15)).
-This equation indicates the importance of initial $\lambda$.
-Thus, let me define this first:
+```{r}
+static_output <- readRDS("RDSfiles/laczo2015_static_lc_output.rds")
+```
 
 ```{r}
-lambda_0 <- 1
-```
-
-### Case 1: Autarky case
-
-Under autarky, there is no transfer and thus the intervals become degenerate. 
-Therefore, $\lambda_{hh, lower} = \lambda_{hh, upper} = 1$, $\lambda_{hl, lower} = \lambda_{hl, upper} = 2$, and $\lambda_{lh, lower} = \lambda_{lh, upper} = 1 / 2$.
-
-### Case 2: Non-overlapping case
-
-To calculate the end-points of the intervals, evaluate profits at the following end-points and the initial point:
-
-* $\lambda_{lh, upper}$, at which the discounted surplus of 2 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_0$, $\lambda_{hl, lower}$, with probabilities $p(1-p)$, $(1-p)^2 + p^2$, and $p(1-p)$, respectively.
-* $\lambda_{hh, lower}$, at which the discounted surplus of 1 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_0$, $\lambda_{hl, lower}$, with probabilities $p(1-p)$, $(1-p)^2 + p^2$, and $p(1-p)$, respectively.
-* $\lambda_{hh, upper}$, at which the discounted surplus of 2 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_0$, $\lambda_{hl, lower}$, with probabilities $p(1-p)$, $(1-p)^2 + p^2$, and $p(1-p)$, respectively.
-* $\lambda_{hl, lower}$, at which the discounted surplus of 1 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_0$, $\lambda_{hl, lower}$, with probabilities $p(1-p)$, $(1-p)^2 + p^2$, and $p(1-p)$, respectively.
-* $\lambda_0$,           at which the discounted surpluses of 1 and 2 are $U_0$ and $V_0$ and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_0$, $\lambda_{hl, lower}$, with probabilities $p(1-p)$, $(1-p)^2 + p^2$, and $p(1-p)$, respectively.
-
-The conditions are
-
-$\begin{aligned}
-  0             &= v(y_2(h) + (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) V_0 + p (1 - p) V_{hl, upper}) \\
-  U_{lh, upper} &= u(y_1(l) - (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(l)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) U_0 + p (1 - p) U_{lh, upper}) \\
-  V_{hh, upper} &= v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - v(y_2(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) V_0 + p (1 - p) V_{hl, upper}) \\
-  0             &= u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - u(y_1(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) U_0 + p (1 - p) U_{lh, upper}) \\
-  0             &= v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - v(y_2(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) V_0 + p (1 - p) V_{hl, upper}) \\
-  U_{hh, upper} &= u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - u(y_1(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) U_0 + p (1 - p) U_{lh, upper}) \\
-  V_{hl, upper} &= v(y_2(l) + (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(l)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) V_0 + p (1 - p) V_{hl, upper}) \\
-  0             &= u(y_1(h) - (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) U_0 + p (1 - p) U_{lh, upper}) \\
-  \\
-  V_0           &= v(y_2(h) + (y_1(h) - y_2(h) \lambda_0) / (1 + \lambda_0)) - v(y_2(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) V_0 + p (1 - p) V_{hl, upper}) \\
-  U_0           &= u(y_1(h) - (y_1(h) - y_2(h) \lambda_0) / (1 + \lambda_0)) - u(y_1(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) U_0 + p (1 - p) U_{lh, upper})
-\end{aligned}$
-
-From the last two conditions, the discounted surpluses at the initial point are
-
-$\begin{aligned}
-  V_0           &= \frac{v(y_2(h) + (y_1(h) - y_2(h) \lambda_0) / (1 + \lambda_0)) - v(y_2(h)) + \delta p (1 - p) V_{hl, upper}}{1 - \delta (1 - 2 * p + 2 * p^2)} \\
-  U_0           &= \frac{u(y_1(h) - (y_1(h) - y_2(h) \lambda_0) / (1 + \lambda_0)) - u(y_1(h)) + \delta p (1 - p) U_{lh, upper}}{1 - \delta (1 - 2 * p + 2 * p^2)}
-\end{aligned}$
-
-The following function solves this system of equations:
-
-```{r}
-# For the case where there is no overlap, solve end-points and surpluses at these points
-
-no_overlap_slc <- function(x, delta, y_l, y_h, p){
-  # x <- c(lambda_{lh, upper}, lambda_{hh, lower}, lambda_{hh, upper}, lambda_{hl, lower}, 
-  #       U_{lh, upper}, V_{hh, upper}, U_{hh, upper}, V_{hl, upper})
-  # First I derive the discounted surpluses at the interior of intervals
-  V_0 <- (v(y_h + (y_h - y_h * lambda_0) / (1 + lambda_0)) - v(y_h) + 
-          delta * p * (1 - p) * x[8]) / (1 - delta * (1 - 2 * p + 2 * p^2))
-  U_0 <- (u(y_h - (y_h - y_h * lambda_0) / (1 + lambda_0)) - u(y_h) + 
-          delta * p * (1 - p) * x[5]) / (1 - delta * (1 - 2 * p + 2 * p^2))
-
-  y <- numeric(8)
-  y[1] <- v(y_h + (y_l - y_h * x[1]) / (1 + x[1])) - v(y_h) + 
-           delta * ((1 - 2 * p + 2 * p^2) * V_0 + p * (1 - p) * x[8])
-  y[2] <- u(y_l - (y_l - y_h * x[1]) / (1 + x[1])) - u(y_l) + 
-            delta * ((1 - 2 * p + 2 * p^2) * U_0 + p * (1 - p) * x[5]) - x[5]
-  y[3] <- v(y_h + (y_h - y_h * x[2]) / (1 + x[2])) - v(y_h) + 
-            delta * ((1 - 2 * p + 2 * p^2) * V_0 + p * (1 - p) * x[8]) - x[6]
-  y[4] <- u(y_h - (y_h - y_h * x[2]) / (1 + x[2])) - u(y_h) + 
-            delta * ((1 - 2 * p + 2 * p^2) * U_0 + p * (1 - p) * x[5])
-  y[5] <- v(y_h + (y_h - y_h * x[3]) / (1 + x[3])) - v(y_h) + 
-            delta * ((1 - 2 * p + 2 * p^2) * V_0 + p * (1 - p) * x[8])
-  y[6] <- u(y_h - (y_h - y_h * x[3]) / (1 + x[3])) - u(y_h) + 
-            delta * ((1 - 2 * p + 2 * p^2) * U_0 + p * (1 - p) * x[5]) - x[7]
-  y[7] <- v(y_l + (y_h - y_l * x[4]) / (1 + x[4])) - v(y_l) + 
-            delta * ((1 - 2 * p + 2 * p^2) * V_0 + p * (1 - p) * x[8]) - x[8]
-  y[8] <- u(y_h - (y_h - y_l * x[4]) / (1 + x[4])) - u(y_h) + 
-            delta * ((1 - 2 * p + 2 * p^2) * U_0 + p * (1 - p) * x[5])
-  return(y)
+static_x_int_array = array(NA, dim = c(S, 2, length(delta_seq)))
+for (i in seq_along(delta_seq)) {
+  static_x_int_array[,,i] <- static_output[[i]][[5]]
 }
 
-x_start <- rep((y_l + y_h) / 2, 8)
-no_overlap_solutions_slc <- nleqslv(x_start, 
-                                no_overlap_slc, 
-                                delta = 0.9,
-                                y_l = y_l, 
-                                y_h = y_h, 
-                                p = p)$x
-
-```
-
-Given this function to solve each end-point, I obtain these end-points in this region, and the threshold with other regions ($\delta_{1, slc}$ (cutoff between autarky region and no-overlapping region) and $\delta_{2, slc}$ (cutoff between non-overlapping region and overlapping region)).
-
-```{r, warning = FALSE}
-
-delta_vals <- seq(0.80, 0.999, by = 0.0001)
-lambda_lh_upper_vals_no_overlap_slc <- numeric(length(delta_vals))
-lambda_hh_lower_vals_no_overlap_slc <- numeric(length(delta_vals))
-lambda_hh_upper_vals_no_overlap_slc <- numeric(length(delta_vals))
-lambda_hl_lower_vals_no_overlap_slc <- numeric(length(delta_vals))
-same_as_autarky_slc <- numeric(length(delta_vals))
-x_start <- rep((y_l + y_h) / 2, 8)
-for (delta in 1:length(delta_vals)){
-  no_overlap_solutions_slc <- nleqslv(x_start, 
-                                  no_overlap_slc, 
-                                  delta = delta_vals[delta],
-                                  y_l = y_l, 
-                                  y_h = y_h, 
-                                  p = p)$x
-  lambda_lh_upper_vals_no_overlap_slc[delta] <- no_overlap_solutions_slc[1]
-  lambda_hh_lower_vals_no_overlap_slc[delta] <- no_overlap_solutions_slc[2]
-  lambda_hh_upper_vals_no_overlap_slc[delta] <- no_overlap_solutions_slc[3]
-  lambda_hl_lower_vals_no_overlap_slc[delta] <- no_overlap_solutions_slc[4]
-  same_as_autarky_slc[delta] <- is.logical(all.equal(no_overlap_solutions_slc[1], 
-                                                     y_l / y_h, tolerance = 1e-3))
-}
-
-delta_1_slc <- delta_vals[max(which(same_as_autarky_slc == 1))]
-delta_2_slc <- delta_vals[min(which(lambda_lh_upper_vals_no_overlap_slc
-                                         >= lambda_hh_lower_vals_no_overlap_slc))]
-
-```
-
-### Case 3: Overlapping case
-
-To calculate the end-points of the intervals, evaluate profits at the following end-points:
-
-* $\lambda_{lh, upper}$, at which the discounted surplus of 2 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_0$, and $\lambda_{hl, lower}$ with probabilities $p(1-p)$, $(1-p)^2 + p^2$, and $p(1-p)$, respectively.
-* $\lambda_{hh, lower}$, at which the discounted surplus of 1 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, lower}$, $\lambda_0$, and $\lambda_{hl, lower}$ with probabilities $p(1-p)$, $(1-p)^2 + p^2$, and $p(1-p)$, respectively.
-* $\lambda_{hh, upper}$, at which the discounted surplus of 2 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_0$, and $\lambda_{ll, upper}$ with probabilities $p(1-p)$, $(1-p)^2 + p^2$, and $p(1-p)$, respectively.
-* $\lambda_{hl, lower}$, at which the discounted surplus of 1 is 0 and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_0$, and $\lambda_{hl, lower}$ with probabilities $p(1-p)$, $(1-p)^2 + p^2$  and $p(1-p)$, respectively.
-* $\lambda_0$,           at which the discounted surpluses of 1 and 2 are $U_0$ and $V_0$ and the next-period ratio of marginal utilities are $\lambda_{lh, upper}$, $\lambda_0$, $\lambda_{hl, lower}$, with probabilities $p(1-p)$, $(1-p)^2 + p^2$, and $p(1-p)$, respectively.
-
-Indeed they are exactly identical to the previous case, which is because of the lack of path dependence in the current model.
-
-The conditions are
-
-$\begin{aligned}
-  0             &= v(y_2(h) + (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) V_0 + p (1 - p) V_{hl, upper}) \\
-  U_{lh, upper} &= u(y_1(l) - (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(l)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) U_0 + p (1 - p) U_{lh, upper}) \\
-  V_{hh, upper} &= v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - v(y_2(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) V_0 + p (1 - p) V_{hl, upper}) \\
-  0             &= u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - u(y_1(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) U_0 + p (1 - p) U_{lh, upper}) \\
-  0             &= v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - v(y_2(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) V_0 + p (1 - p) V_{hl, upper}) \\
-  U_{hh, upper} &= u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - u(y_1(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) U_0 + p (1 - p) U_{lh, upper}) \\
-  V_{hl, upper} &= v(y_2(l) + (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(l)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) V_0 + p (1 - p) V_{hl, upper}) \\
-  0             &= u(y_1(h) - (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) U_0 + p (1 - p) U_{lh, upper}) \\
-  \\
-  V_0           &= v(y_2(h) + (y_1(h) - y_2(h) \lambda_0) / (1 + \lambda_0)) - v(y_2(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) V_0 + p (1 - p) V_{hl, upper}) \\
-  U_0           &= u(y_1(h) - (y_1(h) - y_2(h) \lambda_0) / (1 + \lambda_0)) - u(y_1(h)) + \\
-  &\delta ((1 - 2 * p + 2 * p^2) U_0 + p (1 - p) U_{lh, upper})
-\end{aligned}$
-
-From the last two conditions, the discounted surpluses at the initial point are
-
-$\begin{aligned}
-  V_0           &= \frac{v(y_2(h) + (y_1(h) - y_2(h) \lambda_0) / (1 + \lambda_0)) - v(y_2(h)) + \delta p (1 - p) V_{hl, upper}}{1 - \delta (1 - 2 * p + 2 * p^2)} \\
-  U_0           &= \frac{u(y_1(h) - (y_1(h) - y_2(h) \lambda_0) / (1 + \lambda_0)) - u(y_1(h)) + \delta p (1 - p) U_{lh, upper}}{1 - \delta (1 - 2 * p + 2 * p^2)}
-\end{aligned}$
-
-The following function solves this system of equations:
-
-```{r}
-# For the case where there is no overlap, solve end-points and surpluses at these points
-
-overlap_slc <- function(x, delta, y_l, y_h, p){
-  # x <- c(lambda_{lh, upper}, lambda_{hh, lower}, lambda_{hh, upper}, lambda_{hl, lower}, 
-  #       U_{lh, upper}, V_{hh, upper}, U_{hh, upper}, V_{hl, upper})
-  # First I derive the discounted surpluses at the interior of intervals
-  V_0 <- (v(y_h + (y_h - y_h * lambda_0) / (1 + lambda_0)) - v(y_h) + 
-          delta * p * (1 - p) * x[8]) / (1 - delta * (1 - 2 * p + 2 * p^2))
-  U_0 <- (u(y_h - (y_h - y_h * lambda_0) / (1 + lambda_0)) - u(y_h) + 
-          delta * p * (1 - p) * x[5]) / (1 - delta * (1 - 2 * p + 2 * p^2))
-
-  y <- numeric(8)
-  y[1] <- v(y_h + (y_l - y_h * x[1]) / (1 + x[1])) - v(y_h) + 
-          delta * ((1 - 2 * p + 2 * p^2) * V_0 + p * (1 - p) * x[8])
-  y[2] <- u(y_l - (y_l - y_h * x[1]) / (1 + x[1])) - u(y_l) + 
-          delta * ((1 - 2 * p + 2 * p^2) * U_0 + p * (1 - p) * x[5]) - x[5]
-  y[3] <- v(y_h + (y_h - y_h * x[2]) / (1 + x[2])) - v(y_h) + 
-          delta * ((1 - 2 * p + 2 * p^2) * V_0 + p * (1 - p) * x[8]) - x[6]
-  y[4] <- u(y_h - (y_h - y_h * x[2]) / (1 + x[2])) - u(y_h) + 
-          delta * ((1 - 2 * p + 2 * p^2) * U_0 + p * (1 - p) * x[5])
-  y[5] <- v(y_h + (y_h - y_h * x[3]) / (1 + x[3])) - v(y_h) + 
-          delta * ((1 - 2 * p + 2 * p^2) * V_0 + p * (1 - p) * x[8])
-  y[6] <- u(y_h - (y_h - y_h * x[3]) / (1 + x[3])) - u(y_h) + 
-          delta * ((1 - 2 * p + 2 * p^2) * U_0 + p * (1 - p) * x[5]) - x[7]
-  y[7] <- v(y_l + (y_h - y_l * x[4]) / (1 + x[4])) - v(y_l) + 
-          delta * ((1 - 2 * p + 2 * p^2) * V_0 + p * (1 - p) * x[8]) - x[8]
-  y[8] <- u(y_h - (y_h - y_l * x[4]) / (1 + x[4])) - u(y_h) + 
-          delta * ((1 - 2 * p + 2 * p^2) * U_0 + p * (1 - p) * x[5])
-  return(y)
-}
-
-x_start <- rep((y_l + y_h) / 2, 8)
-overlap_solutions_slc <- nleqslv(x_start, 
-                                overlap_slc, 
-                                delta = 0.9,
-                                y_l = y_l, 
-                                y_h = y_h, 
-                                p = p)$x
-
-```
-
-Given this function to solve each end-point, I obtain these end-points in this region, and the cutoff between overlapping region and first-best region ($\delta_{3,slc}$).
-
-```{r, warning = FALSE}
-
-delta_vals <- seq(0.80, 0.999, by = 0.0001)
-lambda_lh_upper_vals_overlap_slc <- numeric(length(delta_vals))
-lambda_hh_lower_vals_overlap_slc <- numeric(length(delta_vals))
-lambda_hh_upper_vals_overlap_slc <- numeric(length(delta_vals))
-lambda_hl_lower_vals_overlap_slc <- numeric(length(delta_vals))
-x_start <- rep((y_l + y_h) / 2, 8)
-for (delta in 1:length(delta_vals)){
-  overlap_solutions_slc <- nleqslv(x_start, 
-                               overlap_slc, 
-                               delta = delta_vals[delta],
-                               y_l = y_l, 
-                               y_h = y_h, 
-                               p = p)$x
-  lambda_lh_upper_vals_overlap_slc[delta] <- overlap_solutions_slc[1]
-  lambda_hh_lower_vals_overlap_slc[delta] <- overlap_solutions_slc[2]
-  lambda_hh_upper_vals_overlap_slc[delta] <- overlap_solutions_slc[3]
-  lambda_hl_lower_vals_overlap_slc[delta] <- overlap_solutions_slc[4]
-}
-
-delta_3_slc <- delta_vals[min(which(lambda_lh_upper_vals_overlap_slc
-                                         >= lambda_hl_lower_vals_overlap_slc))]
-
-
-```
-
-### Case 4: First-best case
-
-To calculate the end-points of the intervals, evaluate profits at the following end-points and the initial point:
-
-* $\lambda_{lh, upper}$, at which the discounted surplus of 2 is 0 and the next-period ratio of marginal utility is $\lambda_0$ with probability 1.
-* $\lambda_{hh, lower}$, at which the discounted surplus of 1 is 0 and the next-period ratio of marginal utility is $\lambda_0$ and $\lambda_{hl, lower}$ with probabilities $1 - p + p^2$ and $p - p^2$, respectively.
-* $\lambda_{hh, upper}$, at which the discounted surplus of 2 is 0 and the next-period ratio of marginal utility is $\lambda_0$ and $\lambda_{lh, upper}$ with probabilities $1 - p + p^2$ and $p - p^2$, respectively.
-* $\lambda_{hl, lower}$, at which the discounted surplus of 1 is 0 and the next-period ratio of marginal utility is $\lambda_0$ with probability 1.
-* $\lambda_0$,           at which the discounted surpluses of 1 and 2 are $U_0$ and $V_0$ and the next-period ratio of marginal utility is $\lambda_0$ with probability 1.
-
-Here, I define the discounted surpluses at the interior of intervals as the followings:
-
-* $U_0^*,     V_0^*$:    discounted surpluses when income realization is \{Low, High\} and the ratio of marginal utilities is $\lambda_0$,
-* $U_0^{**},  V_0^{**}$: discounted surpluses when income realization is \{High, Low\} and the ratio of marginal utilities is $\lambda_0$,
-
-Then, the conditions are
-
-$\begin{aligned}
-  0             &= v(y_2(h) + (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h)) + \\
-  &\delta ((p - p^2) V_0^* + (1 - 2 p + 2 p^2) V_0 + (p - p^2) V_0^{**}) \\
-  U_{lh, upper} &= u(y_1(l) - (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(l)) + \\
-  &\delta ((p - p^2) U_0^* + (1 - 2 p + 2 p^2) U_0 + (p - p^2) U_0^{**}) \\
-  V_{hh, upper} &= v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - v(y_2(h)) + \\
-  &\delta ((p - p^2) V_0^* + (1 - 2 p + 2 p^2) V_0 + (p - p^2) V_0^{**}) \\
-  0             &= u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, lower}) / (1 + \lambda_{hh, lower})) - u(y_1(h)) + \\
-  &\delta ((p - p^2) U_0^* + (1 - 2 p + 2 p^2) U_0 + (p - p^2) U_0^{**}) \\
-  0             &= v(y_2(h) + (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - v(y_2(h)) + \\
-  &\delta ((p - p^2) V_0^* + (1 - 2 p + 2 p^2) V_0 + (p - p^2) V_0^{**}) \\
-  U_{hh, upper} &= u(y_1(h) - (y_1(h) - y_2(h) \lambda_{hh, upper}) / (1 + \lambda_{hh, upper})) - u(y_1(h)) + \\
-  &\delta ((p - p^2) U_0^* + (1 - 2 p + 2 p^2) U_0 + (p - p^2) U_0^{**}) \\
-  V_{hl, upper} &= v(y_2(l) + (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - v(y_2(l)) + \\
-  &\delta ((p - p^2) V_0^* + (1 - 2 p + 2 p^2) V_0 + (p - p^2) V_0^{**}) \\
-  0             &= u(y_1(h) - (y_1(h) - y_2(l) \lambda_{hl, lower}) / (1 + \lambda_{hl, lower})) - u(y_1(h)) + \\
-  &\delta ((p - p^2) U_0^* + (1 - 2 p + 2 p^2) U_0 + (p - p^2) U_0^{**}) \\
-  \\
-  V_0^*         &= v(y_2(l) + (y_1(h) - y_2(l) \lambda_0) / (1 + \lambda_0)) - v(y_2(l)) + \\
-  &\delta ((p - p^2) V_0^* + (1 - 2 p + 2 p^2) V_0 + (p - p^2) V_0^{**}) \\
-  U_0^*         &= u(y_1(h) - (y_1(h) - y_2(l) \lambda_0) / (1 + \lambda_0)) - u(y_1(h)) + \\
-  &\delta ((p - p^2) U_0^* + (1 - 2 p + 2 p^2) U_0 + (p - p^2) U_0^{**}) \\
-  V_0^{**}      &= v(y_2(h) + (y_1(l) - y_2(h) \lambda_0) / (1 + \lambda_0)) - v(y_2(h)) + \\
-  &\delta ((p - p^2) V_0^* + (1 - 2 p + 2 p^2) V_0 + (p - p^2) V_0^{**}) \\
-  U_0^{**}      &= u(y_1(l) - (y_1(l) - y_2(h) \lambda_0) / (1 + \lambda_0)) - u(y_1(l)) + \\
-  &\delta ((p - p^2) U_0^* + (1 - 2 p + 2 p^2) U_0 + (p - p^2) U_0^{**}) \\
-  V_0           &= v(y_2(h) + (y_1(h) - y_2(h) \lambda_0) / (1 + \lambda_0)) - v(y_2(h)) + \\
-  &\delta ((p - p^2) V_0^* + (1 - 2 p + 2 p^2) V_0 + (p - p^2) V_0^{**}) \\
-  U_0           &= u(y_1(h) - (y_1(h) - y_2(h) \lambda_0) / (1 + \lambda_0)) - u(y_1(h)) + \\
-  &\delta ((p - p^2) U_0^* + (1 - 2 p + 2 p^2) U_0 + (p - p^2) U_0^{**})
-\end{aligned}$
-
-From these we can derive the followings:
-
-$\begin{aligned}
-  V_0^*         &= v(y_2(l) + (y_1(h) - y_2(l) \lambda_0) / (1 + \lambda_0)) - v(y_2(l))                 - \\ 
-  &(v(y_2(h) + (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h))) \\
-  U_0^*         &= u(y_1(h) - (y_1(h) - y_2(l) \lambda_0) / (1 + \lambda_0)) - u(y_1(h)) + U_{lh, upper} - \\
-  &(u(y_1(l) - (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(l))) \\
-  V_0^{**}      &= v(y_2(h) + (y_1(l) - y_2(h) \lambda_0) / (1 + \lambda_0)) - v(y_2(h))                 - \\
-  &(v(y_2(h) + (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - v(y_2(h))) \\
-  U_0^{**}      &= u(y_1(l) - (y_1(l) - y_2(h) \lambda_0) / (1 + \lambda_0)) - u(y_1(l)) + U_{lh, upper} - \\
-  &(u(y_1(l) - (y_1(l) - y_2(h) \lambda_{lh, upper}) / (1 + \lambda_{lh, upper})) - u(y_1(l))) \\
-  V_0           &= \frac{v(y_2(h) + (y_1(h) - y_2(h) \lambda_0) / (1 + \lambda_0)) - v(y_2(h)) + \delta ((p - p^2) V_0^* + (p - p^2) V_0^{**})}{1 - \delta (1 - 2 p + 2 p^2)} \\
-  U_0           &= \frac{u(y_1(h) - (y_1(h) - y_2(h) \lambda_0) / (1 + \lambda_0)) - u(y_1(h)) + \delta ((p - p^2) U_0^* + (p - p^2) U_0^{**})}{1 - \delta (1 - 2 p + 2 p^2)}
-\end{aligned}$
-
-The following function solves the system of equations:
-
-```{r}
-# For the case where first best can be achieved, solve end-points and surpluses at these points
-
-first_best_slc <- function(x, delta, y_l, y_h, p){
-  # x <- c(lambda_{lh, upper}, lambda_{hh, lower}, lambda_{hh, upper}, lambda_{hl, lower}, 
-  #       U_{lh, upper}, V_{hh, upper}, U_{hh, upper}, V_{hl, upper})
-  # First I derive the discounted surpluses at the interior of intervals and at the initial point
-
-  V_0_star  <-  v(y_h + (y_l - y_h * lambda_0) / (1 + lambda_0)) - v(y_h) - 
-                (v(y_h + (y_l - y_h * x[1]) / (1 + x[1])) - v(y_h))
-  U_0_star  <-  u(y_l - (y_l - y_h * lambda_0) / (1 + lambda_0)) - u(y_l) + 
-                x[5] - (u(y_l - (y_l - y_h * x[1]) / (1 + x[1])) - u(y_l))
-  V_0_2star <-  v(y_l + (y_h - y_l * lambda_0) / (1 + lambda_0)) - v(y_l) -
-                (v(y_h + (y_l - y_h * x[1]) / (1 + x[1])) - v(y_h))
-  U_0_2star <-  u(y_h - (y_h - y_l * lambda_0) / (1 + lambda_0)) - u(y_h) + 
-                x[5] - (u(y_l - (y_l - y_h * x[1]) / (1 + x[1])) - u(y_l))
-  V_0       <- (v(y_h + (y_h - y_h * lambda_0) / (1 + lambda_0)) - v(y_h) + 
-                delta * ((p - p^2) * V_0_star + (p - p^2) * V_0_2star)) / 
-                (1 - delta * (1 - 2 * p + 2 * p^2))
-  U_0       <- (u(y_h - (y_h - y_h * lambda_0) / (1 + lambda_0)) - u(y_h) + 
-                delta * ((p - p^2) * U_0_star + (p - p^2) * U_0_2star)) / 
-                (1 - delta * (1 - 2 * p + 2 * p^2))
-
-  y <- numeric(8)
-  y[1] <- v(y_h + (y_l - y_h * x[1]) / (1 + x[1])) - v(y_h) + 
-          delta * ((p - p^2) * V_0_star + (1 - 2 * p + 2 * p^2) * V_0 + (p - p^2) * V_0_2star)
-  y[2] <- u(y_l - (y_l - y_h * x[1]) / (1 + x[1])) - u(y_l) + 
-          delta * ((p - p^2) * U_0_star + (1 - 2 * p + 2 * p^2) * U_0 + (p - p^2) * U_0_2star) - x[5]
-  y[3] <- v(y_h + (y_h - y_h * x[2]) / (1 + x[2])) - v(y_h) + 
-          delta * ((p - p^2) * V_0_star + (1 - 2 * p + 2 * p^2) * V_0 + (p - p^2) * V_0_2star) - x[6]
-  y[4] <- u(y_h - (y_h - y_h * x[2]) / (1 + x[2])) - u(y_h) + 
-          delta * ((p - p^2) * U_0_star + (1 - 2 * p + 2 * p^2) * U_0 + (p - p^2) * U_0_2star)
-  y[5] <- v(y_h + (y_h - y_h * x[3]) / (1 + x[3])) - v(y_h) + 
-          delta * ((p - p^2) * V_0_star + (1 - 2 * p + 2 * p^2) * V_0 + (p - p^2) * V_0_2star)
-  y[6] <- u(y_h - (y_h - y_h * x[3]) / (1 + x[3])) - u(y_h) + 
-          delta * ((p - p^2) * U_0_star + (1 - 2 * p + 2 * p^2) * U_0 + (p - p^2) * U_0_2star) - x[7]
-  y[7] <- v(y_l + (y_h - y_l * x[4]) / (1 + x[4])) - v(y_l) + 
-          delta * ((p - p^2) * V_0_star + (1 - 2 * p + 2 * p^2) * V_0 + (p - p^2) * V_0_2star) - x[8]
-  y[8] <- u(y_h - (y_h - y_l * x[4]) / (1 + x[4])) - u(y_h) + 
-          delta * ((p - p^2) * U_0_star + (1 - 2 * p + 2 * p^2) * U_0 + (p - p^2) * U_0_2star)
-  return(y)
-}
-
-```
-
-Given this function to solve each end-point, I obtain these end-points in this region:
-
-```{r, warning = FALSE}
-
-delta_vals <- seq(0.80, 0.999, by = 0.0001)
-lambda_lh_upper_vals_first_best_slc <- numeric(length(delta_vals))
-lambda_hh_lower_vals_first_best_slc <- numeric(length(delta_vals))
-lambda_hh_upper_vals_first_best_slc <- numeric(length(delta_vals))
-lambda_hl_lower_vals_first_best_slc <- numeric(length(delta_vals))
-x_start <- rep((y_l + y_h) / 2, 8)
-for (delta in 1:length(delta_vals)){
-  first_best_solutions_slc <- nleqslv(x_start, 
-                               first_best_slc, 
-                               delta = delta_vals[delta],
-                               y_l = y_l, 
-                               y_h = y_h, 
-                               p = p)$x
-  lambda_lh_upper_vals_first_best_slc[delta] <- first_best_solutions_slc[1]
-  lambda_hh_lower_vals_first_best_slc[delta] <- first_best_solutions_slc[2]
-  lambda_hh_upper_vals_first_best_slc[delta] <- first_best_solutions_slc[3]
-  lambda_hl_lower_vals_first_best_slc[delta] <- first_best_solutions_slc[4]
-}
-
-```
-
-### Plot the lambda's in static model
-With the information at hand, I plot the end-points in static model:
-
-```{r, warning = FALSE}
-
-delta_vals <- seq(0.80, 0.999, by = 0.0001)
-
-lambda_lh_upper_vals_slc <- numeric(length(delta_vals))
-lambda_hh_lower_vals_slc <- numeric(length(delta_vals))
-lambda_hh_upper_vals_slc <- numeric(length(delta_vals))
-lambda_hl_lower_vals_slc <- numeric(length(delta_vals))
-x_start <- rep((y_l + y_h) / 2, 8)
-for (delta in 1:length(delta_vals)){
-  if (delta_vals[delta] <= delta_1_slc){
-    lambda_lh_upper_vals_slc[delta] <- y_l / y_h 
-    lambda_hh_lower_vals_slc[delta] <- 1
-    lambda_hh_upper_vals_slc[delta] <- 1
-    lambda_hl_lower_vals_slc[delta] <- y_h / y_l 
-  } else if (delta_vals[delta] > delta_1_slc & delta_vals[delta] <= delta_2_slc){
-    lambda_lh_upper_vals_slc[delta] <- lambda_lh_upper_vals_no_overlap_slc[delta]
-    lambda_hh_lower_vals_slc[delta] <- lambda_hh_lower_vals_no_overlap_slc[delta]
-    lambda_hh_upper_vals_slc[delta] <- lambda_hh_upper_vals_no_overlap_slc[delta]
-    lambda_hl_lower_vals_slc[delta] <- lambda_hl_lower_vals_no_overlap_slc[delta]
-  } else if (delta_vals[delta] > delta_2_slc & delta_vals[delta] <= delta_3_slc){
-    lambda_lh_upper_vals_slc[delta] <- lambda_lh_upper_vals_overlap_slc[delta]
-    lambda_hh_lower_vals_slc[delta] <- lambda_hh_lower_vals_overlap_slc[delta]
-    lambda_hh_upper_vals_slc[delta] <- lambda_hh_upper_vals_overlap_slc[delta]
-    lambda_hl_lower_vals_slc[delta] <- lambda_hl_lower_vals_overlap_slc[delta]
-  } else {
-    lambda_lh_upper_vals_slc[delta] <- lambda_lh_upper_vals_first_best_slc[delta]
-    lambda_hh_lower_vals_slc[delta] <- lambda_hh_lower_vals_first_best_slc[delta]
-    lambda_hh_upper_vals_slc[delta] <- lambda_hh_upper_vals_first_best_slc[delta]
-    lambda_hl_lower_vals_slc[delta] <- lambda_hl_lower_vals_first_best_slc[delta]
-  }
-}
-
-lambda_lh_lower_vals_slc <- rep(y_l / y_h, length(delta_vals))
-lambda_hl_upper_vals_slc <- rep(y_h / y_l, length(delta_vals))
-
-ggplot() +
-  geom_line(aes(delta_vals, log(lambda_lh_lower_vals_slc), color="a")) + 
-  geom_line(aes(delta_vals, log(lambda_lh_upper_vals_slc), color="b")) + 
-  geom_line(aes(delta_vals, log(lambda_hh_lower_vals_slc), color="c")) + 
-  geom_line(aes(delta_vals, log(lambda_hh_upper_vals_slc), color="d")) +
-  geom_line(aes(delta_vals, log(lambda_hl_lower_vals_slc), color="e")) +
-  geom_line(aes(delta_vals, log(lambda_hl_upper_vals_slc), color="f")) +
-  coord_cartesian(xlim = c(0.8, 1.0), ylim = c(log(y_l / y_h), log(y_h / y_l))) +
-  geom_ribbon(aes(x = delta_vals,
-                  ymin = log(lambda_lh_lower_vals_slc),
-                  ymax = log(lambda_lh_upper_vals_slc)),
+static_lc_plot <- ggplot() +
+  geom_line(aes(delta_seq, log(static_x_int_array[1,1,]), color = "a")) + 
+  geom_line(aes(delta_seq, log(static_x_int_array[1,2,]), color = "b")) + 
+  geom_line(aes(delta_seq, log(static_x_int_array[2,1,]), color = "c")) + 
+  geom_line(aes(delta_seq, log(static_x_int_array[2,2,]), color = "d")) +
+  geom_line(aes(delta_seq, log(static_x_int_array[3,1,]), color = "e")) +
+  geom_line(aes(delta_seq, log(static_x_int_array[3,2,]), color = "f")) +
+  geom_line(aes(delta_seq, log(static_x_int_array[4,1,]), color = "g")) +
+  geom_line(aes(delta_seq, log(static_x_int_array[4,2,]), color = "h")) +
+  coord_cartesian(xlim = c(0.8, 1.0), ylim = c(log(inc1[1] / inc1[2]), log(inc1[2] / inc1[1]))) +
+  geom_ribbon(aes(x = delta_seq,
+                  ymin = log(static_x_int_array[1,1,]),
+                  ymax = log(static_x_int_array[1,2,])),
                   fill = "blue", alpha = 0.2) +
-  geom_ribbon(aes(x = delta_vals,
-                  ymin = log(lambda_hh_lower_vals_slc),
-                  ymax = log(lambda_hh_upper_vals_slc)),
+  geom_ribbon(aes(x = delta_seq,
+                  ymin = log(static_x_int_array[2,1,]),
+                  ymax = log(static_x_int_array[2,2,])),
                   fill = "red", alpha = 0.2) +
-  geom_ribbon(aes(x = delta_vals,
-                  ymin = log(lambda_hl_lower_vals_slc),
-                  ymax = log(lambda_hl_upper_vals_slc)),
-                  fill = "green", alpha = 0.2) + 
-  scale_color_manual(name = "End-points", values = c("blue",
-                                                     "purple",
-                                                     "brown",
-                                                     "red",
-                                                     "yellow",
-                                                     "green"), 
-                     labels = c("lambda_lh_lower",
-                                "lambda_lh_upper",
-                                "lambda_hh_lower",
-                                "lambda_hh_upper",
-                                "lambda_hl_lower",
-                                "lambda_hl_upper")) +
+  geom_ribbon(aes(x = delta_seq,
+                  ymin = log(static_x_int_array[3,1,]),
+                  ymax = log(static_x_int_array[3,2,])),
+                  fill = "green", alpha = 0.2) +
+  geom_ribbon(aes(x = delta_seq,
+                  ymin = log(static_x_int_array[4,1,]),
+                  ymax = log(static_x_int_array[4,2,])),
+                  fill = "orange", alpha = 0.2) +
+  scale_color_manual(
+    name = "End-points", 
+    values = c(
+      "blue",
+      "purple",
+      "brown",
+      "red",
+      "yellow",
+      "green",
+      "orange",
+      "gray"
+      ), 
+    labels = unname(TeX(c(
+      "$\\underline{x}_{ll}$",
+      "$\\bar{x}_{ll}$",
+      "$\\underline{x}_{hl}$",
+      "$\\bar{x}_{hl}$",
+      "$\\underline{x}_{lh}$",
+      "$\\bar{x}_{lh}$",
+      "$\\underline{x}_{hh}$",
+      "$\\bar{x}_{hh}$"
+      )))
+    ) +
   xlab("Discount factor (delta)") +
-  ylab("log of the ratio of marginal utilities (lambda)")
-```
+  ylab("log of the relative Pareto weights (x)")
 
-The cutoffs of the regions are $\delta_{1, slc} = `r delta_1_slc`$, $\delta_{2, slc} = `r delta_2_slc`$, and $\delta_{3, slc} = `r delta_3_slc`$.
-Note that the cutoffs of the regions in the dynamic limited commitment model are $\delta_1 = `r delta_1`$, $\delta_2 = `r delta_2`$, and $\delta_3 = `r delta_3`$.
-
-### Plot the figure
-
-I will next see how $\lambda$ changes over time in response to income shocks.
-This is the function to create the figure:
-
-```{r, warning = FALSE}
-
-lambda_change_plot_slc <- function(lambda_init, delta, n){
-
-
-  # Sequence of income shocks
-  income_realization <- c(1, 2, 3, 4)
-  income_realization_label <- c("High, High", "High, Low", "Low, High", "Low, Low")
-  income_seq <- sample(income_realization,
-                       size = n,
-                       replace = TRUE,
-                       prob = c((1 - p)^2,
-                                p * (1 - p),
-                                p * (1 - p),
-                                p^2))
-
-  # Sequence of the ratios of marginal utilities under autarky 
-  xi_seq <- numeric(n)
-  income_realization_label_seq <- rep("", n)
-  for (i in 1:n){
-    xi_seq[i] <- 1 * (income_seq[i] == 1) + 
-                (y_h / y_l) * (income_seq[i] == 2) +
-                (y_l / y_h) * (income_seq[i] == 3) +
-                1 * (income_seq[i] == 4)
-    income_realization_label_seq[i] <- income_realization_label[income_seq[i]]
-  }
-  
-  # Given the initial lambda, derive the sequence of lambda's
-  
-  if (delta <= delta_1_slc){
-    lambda_lh_upper <- y_l / y_h
-    lambda_hh_lower <- 1
-    lambda_hh_upper <- 1
-    lambda_hl_lower <- y_h / y_l
-  } else if (delta > delta_1_slc & delta <= delta_2_slc){
-    no_overlap_solutions_slc <- nleqslv(x_start, 
-                                    no_overlap_slc, 
-                                    delta = delta,
-                                    y_l = y_l, 
-                                    y_h = y_h, 
-                                    p = p)$x
-    lambda_lh_upper <- no_overlap_solutions_slc[1]
-    lambda_hh_lower <- no_overlap_solutions_slc[2]
-    lambda_hh_upper <- no_overlap_solutions_slc[3]
-    lambda_hl_lower <- no_overlap_solutions_slc[4]
-  } else if (delta > delta_2_slc & delta <= delta_3_slc) {
-    overlap_solutions_slc <- nleqslv(x_start, 
-                                 overlap_slc, 
-                                 delta = delta,
-                                 y_l = y_l, 
-                                 y_h = y_h, 
-                                 p = p)$x
-    lambda_lh_upper <- overlap_solutions_slc[1]
-    lambda_hh_lower <- overlap_solutions_slc[2]
-    lambda_hh_upper <- overlap_solutions_slc[3]
-    lambda_hl_lower <- overlap_solutions_slc[4]
-  } else {
-    first_best_solutions_slc <- nleqslv(x_start, 
-                                 first_best_slc, 
-                                 delta = delta,
-                                 y_l = y_l, 
-                                 y_h = y_h, 
-                                 p = p)$x
-    lambda_lh_upper <- first_best_solutions_slc[1]
-    lambda_hh_lower <- first_best_solutions_slc[2]
-    lambda_hh_upper <- first_best_solutions_slc[3]
-    lambda_hl_lower <- first_best_solutions_slc[4]
-  }
-  
-  lambda_seq <- numeric(n)
-
-  if (delta <= delta_1_slc){
-    lambda_seq <- xi_seq
-  } else if (delta > delta_1_slc & delta <= delta_2_slc){
-    for (i in 1:n){
-      if (lambda_init >= lambda_hl_lower){
-        lambda_seq[i] <- lambda_init * (income_seq[i] == 2) +
-          lambda_hh_upper * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_lh_upper * (income_seq[i] == 3)
-      } else if (lambda_init < lambda_hl_lower & lambda_init >= lambda_hh_upper){
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-          lambda_hh_upper * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_lh_upper * (income_seq[i] == 3)
-      } else if (lambda_init < lambda_hh_upper & lambda_init >= lambda_hh_lower){
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-          lambda_init * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_lh_upper * (income_seq[i] == 3)
-      } else if (lambda_init < lambda_hh_lower & lambda_init >= lambda_lh_upper){
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-          lambda_hh_lower * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_lh_upper * (income_seq[i] == 3)
-      } else {
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-          lambda_hh_lower * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_init* (income_seq[i] == 3)
-      }
-    }
-  } else if (delta > delta_2_slc & delta <= delta_3_slc) {
-    for (i in 1:n){
-      if (lambda_init >= lambda_hh_upper){
-        lambda_seq[i] <- lambda_init * (income_seq[i] == 2) +
-          lambda_hh_upper * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_lh_upper * (income_seq[i] == 3)
-      } else if (lambda_init < lambda_hh_upper & lambda_init >= lambda_hl_lower){
-        lambda_seq[i] <- lambda_init * (income_seq[i] == 2) +
-          lambda_init * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_lh_upper * (income_seq[i] == 3)
-      } else if (lambda_init < lambda_hl_lower & lambda_init >= lambda_lh_upper){
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-          lambda_init * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_lh_upper * (income_seq[i] == 3)
-      } else if (lambda_init < lambda_lh_upper & lambda_init >= lambda_hh_lower){
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-          lambda_init * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_init * (income_seq[i] == 3)
-      } else {
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-          lambda_hh_lower * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_init * (income_seq[i] == 3)
-      }
-    }
-  } else {
-    for (i in 1:n){
-      if (lambda_init >= lambda_hh_upper){
-        lambda_seq[i] <- lambda_init * (income_seq[i] == 2) +
-          lambda_hh_upper * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_lh_upper * (income_seq[i] == 3)
-      } else if (lambda_init < lambda_hh_upper & lambda_init >= lambda_lh_upper){
-        lambda_seq[i] <- lambda_init * (income_seq[i] == 2) +
-          lambda_init * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_lh_upper * (income_seq[i] == 3)
-      } else if (lambda_init < lambda_lh_upper & lambda_init >= lambda_hl_lower){
-        lambda_seq[i] <- lambda_init * (income_seq[i] == 2) +
-          lambda_init * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_init * (income_seq[i] == 3)
-      } else if (lambda_init < lambda_hl_lower & lambda_init >= lambda_hh_lower){
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-          lambda_init * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_init * (income_seq[i] == 3)
-      } else {
-        lambda_seq[i] <- lambda_hl_lower * (income_seq[i] == 2) +
-          lambda_hh_lower * (income_seq[i] == 1 | income_seq[i] == 4) +
-          lambda_init * (income_seq[i] == 3)
-      }
-    }
-  }
-  # Sequence of net transfers (1 -> 2), income, and consumptions
-  transfer_seq <- numeric(n)
-  inc_seq_1 <- numeric(n)
-  inc_seq_2 <- numeric(n)
-  cons_seq_1 <- numeric(n)
-  cons_seq_2 <- numeric(n)
-  for (i in 1:n){
-    if (income_seq[i] == 1){
-      transfer_seq[i] <- (y_h - y_h * lambda_seq[i]) / (1 + lambda_seq[i])
-      inc_seq_1[i] <- y_h
-      inc_seq_2[i] <- y_h
-      cons_seq_1[i] <- y_h - transfer_seq[i]
-      cons_seq_2[i] <- y_h + transfer_seq[i]
-    } else if (income_seq[i] == 2) {
-      transfer_seq[i] <- (y_h - y_l * lambda_seq[i]) / (1 + lambda_seq[i])
-      inc_seq_1[i] <- y_h
-      inc_seq_2[i] <- y_l
-      cons_seq_1[i] <- y_h - transfer_seq[i]
-      cons_seq_2[i] <- y_l + transfer_seq[i]
-    } else if (income_seq[i] == 3) {
-      transfer_seq[i] <- (y_l - y_h * lambda_seq[i]) / (1 + lambda_seq[i])
-      inc_seq_1[i] <- y_l
-      inc_seq_2[i] <- y_h
-      cons_seq_1[i] <- y_l - transfer_seq[i]
-      cons_seq_2[i] <- y_h + transfer_seq[i]
-    } else {
-      transfer_seq[i] <- (y_l - y_l * lambda_seq[i]) / (1 + lambda_seq[i])
-      inc_seq_1[i] <- y_l
-      inc_seq_2[i] <- y_l
-      cons_seq_1[i] <- y_l - transfer_seq[i]
-      cons_seq_2[i] <- y_l + transfer_seq[i]
-    }
-  }
-  plot_test <- ggplot() +
-                geom_line(aes(delta_vals,
-                              log(lambda_lh_lower_vals_slc),
-                              color="a")) + 
-                geom_line(aes(delta_vals,
-                              log(lambda_lh_upper_vals_slc),
-                              color="b")) + 
-                geom_line(aes(delta_vals,
-                              log(lambda_hh_lower_vals_slc),
-                              color="c")) + 
-                geom_line(aes(delta_vals,
-                              log(lambda_hh_upper_vals_slc),
-                              color="d")) +
-                geom_line(aes(delta_vals,
-                              log(lambda_hl_lower_vals_slc),
-                              color="e")) +
-                geom_line(aes(delta_vals,
-                              log(lambda_hl_upper_vals_slc),
-                              color="f")) +
-                coord_cartesian(xlim = c(0.8, 1.0),
-                                ylim = c(log(y_l / y_h), log(y_h / y_l))) +
-                geom_ribbon(aes(x = delta_vals, 
-                                ymin = log(lambda_lh_lower_vals_slc), 
-                                ymax = log(lambda_lh_upper_vals_slc)),
-                                fill = "blue", alpha = 0.2) +
-                geom_ribbon(aes(x = delta_vals, 
-                                ymin = log(lambda_hh_lower_vals_slc), 
-                                ymax = log(lambda_hh_upper_vals_slc)),
-                                fill = "red", alpha = 0.2) +
-                geom_ribbon(aes(x = delta_vals, 
-                                ymin = log(lambda_hl_lower_vals_slc), 
-                                ymax = log(lambda_hl_upper_vals_slc)),
-                                fill = "green", alpha = 0.2) + 
-                geom_vline(xintercept = delta, 
-                           color = "black", 
-                           size = 0.8, 
-                           alpha = 0.6) +
-                scale_color_manual(name = "End-points", 
-                                   values = c("blue", "purple", "brown", "red", "yellow", "green"), 
-                                   labels = c("lambda_lh_lower", "lambda_lh_upper", 
-                                              "lambda_hh_lower", "lambda_hh_upper", 
-                                              "lambda_hl_lower", "lambda_hl_upper")) +
-                xlab("Discount factor (delta)") +
-                ylab("log of the ratio of marginal utilities (lambda)") +
-                geom_point(aes(rep(delta, (n + 1)), c(log(lambda_init), log(lambda_seq)))) +
-                geom_label_repel(
-                  aes(rep(delta, (n + 1)), c(log(lambda_init), log(lambda_seq)), label = seq(0,n)),
-                  box.padding = 0.35, point.padding = 0.5)
-  
-  result_table <- data.frame(cbind(seq(0,n), 
-                                   round(c(log(lambda_init), log(lambda_seq)), 3), 
-                                   c(NaN, income_realization_label_seq),
-                                   round(c(NaN, transfer_seq), 3),
-                                   round(c(NaN, cons_seq_1), 3),
-                                   round(c(NaN, cons_seq_2), 3)
-                                    ))
-  colnames(result_table) <- c("Period", 
-                              "ln(lambda)", 
-                              "Income shocks", 
-                              "Net transfer (1 -> 2)", 
-                              "Consumption (1)", 
-                              "Consumption (2)")
-
-  summary_table <- matrix(c(mean(cons_seq_1), 
-                            std(cons_seq_1), 
-                            mean(cons_seq_2), 
-                            std(cons_seq_2), 
-                            mean(inc_seq_1), 
-                            std(inc_seq_1), 
-                            mean(inc_seq_2), 
-                            std(inc_seq_2)), byrow = TRUE, ncol = 2)
-  summary_table <- round(summary_table, 3)
-  colnames(summary_table) <- c("Mean", "Std")
-  rownames(summary_table) <- c("Consumption (1)", "Consumption (2)", "Income (1)", "Income (2)")
-  return(list(plot_test, result_table, summary_table))
-}
+static_lc_plot
 
 ```
 
-#### Plot the figure and compare!
-
-I plot the figure under the static limited commitment first, and for comparison I plot the figure under the dynamic limited commitment too.
-I try a discount factor so that in both models we are in the non-overlapping region.
-This is because in this region the difference is the most salient.
+Given this figure, I compare how transition of the relative Pareto weights differ between two models.
+As the value of $\delta$, I use the same value as the one used for the overlapping case above.
 
 ```{r}
-n <- 10
-lambda_init <- lambda_0
-delta <- 0.925
-set.seed(1)
-result_slc <- lambda_change_plot_slc(lambda_init, delta, n)
-plot_figure_slc <- result_slc[1]
-result_table_slc <- result_slc[2]
-summary_table_slc <- result_slc[3]
-
-set.seed(1)
-result <- lambda_change_plot(lambda_init, delta, n)
-plot_figure <- result[1]
-result_table <- result[2]
-summary_table <- result[3]
-
+delta_ind <- 73
+(delta_static <- delta_seq[delta_ind])
 ```
 
-First, I show the result in the static model.
-
 ```{r}
-kable(result_table_slc, caption = "Static limited commitment model")
-plot_figure_slc
+output_static <- create_plot_table(
+  delta_ind, static_lc_plot, 
+  static_x_int_array, dynamic = FALSE
+  )
 ```
 
-Next, I show the result in the dynamic model.
-Note that the income shock sequence is common in two models.
+```{r}
+table_static <- output_static[[1]]
+kable(table_static, digits = 3)
+```
 
 ```{r}
-kable(result_table, caption = "Dynamic limited commitment model")
-plot_figure
+output_static[[2]]
+```
+
+```{r}
+kable(output_static[[3]], digits = 3)
 ```
 
 There are several things that should be noted.
 First, in the static limited commitment model, the payment is not path dependence:
-only current incomes matter for transfers.
-Second, in the static model, when possible, the marginal utilities are equated.
-While this appears to be a nice thing, this comes at the cost of larger fluctuation of $\lambda$.
-This results in more fluctuating consumptions as shown in the table.
+only current income matters for transfers.
+Second, in the static model, when possible, the marginal utilities are back to the initial value, $1$ (note that $\log(1) = 0$).
+While this appears to be a nice thing, this comes at the cost of larger fluctuation of $x$.
+This results in more fluctuating consumptions as shown in the table below.
 
 ```{r}
-summary_table_both <- cbind(summary_table[[1]], summary_table_slc[[1]])
-colnames(summary_table_both) <- c("Mean (dynamic)", 
-                                  "Std (dynamic)", 
-                                  "Mean (static)", 
-                                  "Std (static)")
-kable(summary_table_both, caption = "Summary statistics")
+compare_table <- left_join(output_ol[[3]], output_static[[3]], by = "")
+colnames(compare_table) <- c("", "Mean (DLC)", "SD (DLC)", "Mean (SLC)", "SD (SLC)")
+kable(
+  compare_table, digits = 3, 
+  caption = "Comparison between dynamic limited commitment (DLC) model and static limited commitment (SLC) model"
+  )
 ```
+
+## Transfers under dynamic limited commitment model with 3 states
+
+In the numerical exercises so far, there are two states (or, 2 $\times$ 2 states) for income realizations.
+Here, I consider the three-state model  (or, 3 $\times$ 3 states).
+
+```{r}
+output_3_states <- readRDS("RDSfiles/laczo2015_dynamic_lc_3_states_output.rds")
+x_int_3_states <- output_3_states[[5]]
+```
+
+```{r}
+# income shocks and their transition probabilities of the household
+inc1 <- c(1/4, 2/2, 5/4)
+P1 <- matrix(rep(c(0.2, 0.6, 0.2), 3), nrow = 3, byrow = TRUE)
+
+# income shocks and their transition probabilities of the village
+inc1 <- c(1/4, 2/2, 5/4)
+P2 <- matrix(rep(c(0.2, 0.6, 0.2), 3), nrow = 3, byrow = TRUE)
+
+delta <- 0.85 # time discount factor
+sigma1 <- 1.0 # coefficient of relative risk aversion of HH1
+sigma2 <- 1.0 # coefficient of relative risk aversion of HH2
+pcphi <- 0.0 # punishment under autarky
+
+# transition super-matrix of income shocks
+R <- kronecker(P2, P1)
+
+# number of states
+# (number of income states for a household times
+# number of income states for the village)
+S <- length(inc1) * length(inc2)
+
+# Income matrix
+# (col 1: HH income, col 2: village income)
+inc_mat <- as.matrix(expand.grid(inc1, inc2))
+
+# Aggregate income in each state
+inc_ag <- rowSums(inc_mat)
+```
+
+```{r}
+n <- 20
+
+set.seed(37)
+
+# Sequence of income shocks
+income_realization <- seq(S)
+income_realization_label <- c(
+  "Low, Low", "Meidum, Low", "High, Low",
+  "Low, Medium", "Meidum, Medium", "High, Medium",
+  "Low, High", "Meidum, High", "High, High"
+  )
+income_seq <- sample(income_realization, 
+                     size = n,
+                     replace = TRUE,
+                     prob = R[1,])
+
+inc1_realization <- inc_mat[income_seq, 1]
+inc2_realization <- inc_mat[income_seq, 2]
+(income_realization_vec <- income_realization_label[income_seq])
+```
+
+```{r}
+
+# Vector of relative Pareto weights
+x_vec <- rep(NA, n + 1)
+x_vec[1] <- 1
+x_int_array_aut <- x_int_3_states
+
+# Relative Pareto weights on the history of income realizations
+for (t in seq(n)) {
+  x_int_temp <- x_int_array_aut[income_seq[t],] 
+  if (x_vec[t] < x_int_temp[1]) {
+    x_vec[t + 1] <- x_int_temp[1]
+  } else if (x_vec[t] > x_int_temp[2]) {
+    x_vec[t + 1] <- x_int_temp[2]
+  } else {
+    x_vec[t + 1] <- x_vec[t]
+  }
+}
+
+# Consumption and transfers, calculated based on x_vec
+cons1_vec <- rep(NA, n + 1)
+cons2_vec <- rep(NA, n + 1)
+transfer_1_to_2 <- rep(NA, n + 1)
+for (t in seq(2, n + 1)) {
+  f <- function(w) util_prime(inc_ag[income_seq[t - 1]] - w, sigma2) / util_prime(w, sigma1) - x_vec[t]
+  cons1_vec[t] <- uniroot(f, c(1e-6, (inc_ag[income_seq[t - 1]] - 1e-6)), tol = 1e-10, maxiter = 300)$root
+  cons2_vec[t] <- inc_ag[income_seq[t - 1]] - cons1_vec[t]
+  transfer_1_to_2[t] <- inc_mat[income_seq[t - 1], 1] - cons1_vec[t]
+}
+
+# Output table
+table_output <- tibble(
+  `Period` = seq(0, n),
+  `ln(x)` = log(x_vec),
+  `Income shocks` = c(NA, income_realization_vec),
+  `Net transfer (1 -> 2)` = transfer_1_to_2,
+  `Consumption (1)` = cons1_vec,
+  `Consumption (2)` = cons2_vec,
+  `Income (1)` = c(NA, inc1_realization),
+  `Income (2)` = c(NA, inc2_realization)
+)
+
+kable(table_output, digits = 3)
+
+```
+
+
+
+
+
 
