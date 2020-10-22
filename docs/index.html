@@ -286,17 +286,23 @@ $(document).ready(function () {
 <li>
   <a href="RiskSharingLit.html">Literature</a>
 </li>
-<li>
-  <a href="CR93_code.html">Coate and Ravallion (1993)</a>
-</li>
-<li>
-  <a href="LTW_code.html">Ligon et al. (2002)</a>
-</li>
-<li>
-  <a href="Laczo2015_code.html">Laczó (2015)</a>
-</li>
-<li>
-  <a href="TW88_code.html">Thomas and Worrall (1988)</a>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Limited Commitment
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="Laczo2015_code.html">Computation (Laczó (2015))</a>
+    </li>
+    <li>
+      <a href="LTW_code.html">Ligon et al. (2002)</a>
+    </li>
+    <li>
+      <a href="CR93_code.html">Coate and Ravallion (1993)</a>
+    </li>
+  </ul>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -327,10 +333,9 @@ $(document).ready(function () {
 <li><a href="RiskSharingLit.html">Literature review</a></li>
 <li>Limited commitment model
 <ul>
-<li><span class="citation">[Computation of limited commitment model, based on @Laczo2015]</span>(Laczo2015_code.html)</li>
+<li><a href="Laczo2015_code.html">Computation of limited commitment model, based on Laczó (2015)</a></li>
 <li><a href="LTW_code.html">Numerical exercises of risk-sharing with limited commitment, mainly based on Ligon, Thomas, and Worrall (2002)</a></li>
 <li><a href="CR93_code.html">Replication of numerical exercises in Coate and Ravallion (1993)</a></li>
-<li><a href="TW88_code.html">Replication of Figure 1 in Thomas and Worrall (1988)</a></li>
 </ul></li>
 </ul>
 </div>

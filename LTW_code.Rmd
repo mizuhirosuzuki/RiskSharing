@@ -2,6 +2,11 @@
 title: "Numerical exercises of risk-sharing with limited commitment, mainly based on Ligon, Thomas, and Worrall (2002)"
 author: "Mizuhiro Suzuki"
 date: "10/21/2020"
+bibliography: risksharing.bib
+output:
+  html_document:
+    toc: true
+    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
@@ -29,7 +34,7 @@ In this document, my goal is to explain how risk sharing occurs with limited com
 For this, I mainly use the numerical exercise in @Ligon2002 and how consumptino fluctuates in response to income shocks.
 [Here](Laczo2015_code.html) I show how to compute the intervals of the relative Pareto weights, which fully characterize the evolution of consumption.
 
-## Risk sharing under dynamic limited commitment
+# Risk sharing under dynamic limited commitment
 
 Here I will discuss how risk sharing works under dynamic limited commitment as in @Ligon2002.
 As @Ligon2002, there are two households with log utility functions, and the income process, which is independent across households and time, is specified as follows:
@@ -275,7 +280,7 @@ create_plot_table <- function(delta_ind, lc_plot, x_int_array, dynamic = TRUE) {
 Below I consider risk-sharing in 4 different regions in turn by discount factor $\delta$:
 autarky region, non-overlapping region, overlapping region, and first-best region.
 
-### Case 1: Autarky region
+## Case 1: Autarky region
 
 Here I consider the autarky region, where no risk-sharing occurs.
 
@@ -303,7 +308,7 @@ kable(output_aut[[3]], digits = 3)
 
 As you can see from the table and figure, there is no transfer between households (ie. consumption and income perfectly covary) and the ratio of marginal utilities fluctuates a lot in response to income shocks.
 
-### Case 2: Non-overlapping region
+## Case 2: Non-overlapping region
 
 Now, I try and see the transition in the ratio of marginal utilities and consumptions in the non-overlapping region.
 
@@ -336,7 +341,7 @@ This is the benefit of risk sharing, although full insurance is not achieved sin
 kable(output_non_ol[[3]], digits = 3)
 ```
 
-### Case 3: Overlapping region
+## Case 3: Overlapping region
 
 Next, I look at how the relative Pareto weights change over time in the overlapping region:
 
@@ -365,7 +370,7 @@ This results in less fluctuating consumption as the table below shows:
 kable(output_ol[[3]], digits = 3)
 ```
 
-### Case 4: First-best region
+## Case 4: First-best region
 
 Finally, I try to see the transitions in the first-best region.
 
@@ -394,7 +399,7 @@ This means that full insurance is achieved, although due to the aggregate shocks
 kable(output_fb[[3]], digits = 3)
 ```
 
-## Comparison with static limited commitment model (Coate & Ravallion (1993))
+# Comparison with static limited commitment model (Coate & Ravallion (1993))
 
 Here I compare how different risk-sharing schemes under dynamic limited commitment (@Ligon2002) and static limited commitment (@Coate1993).
 I show the similar figure to the one in @Ligon2002, but under static limited commitment.
@@ -514,116 +519,4 @@ kable(
   )
 ```
 
-## Transfers under dynamic limited commitment model with 3 states
-
-In the numerical exercises so far, there are two states (or, 2 $\times$ 2 states) for income realizations.
-Here, I consider the three-state model  (or, 3 $\times$ 3 states).
-
-```{r}
-output_3_states <- readRDS("RDSfiles/laczo2015_dynamic_lc_3_states_output.rds")
-x_int_3_states <- output_3_states[[5]]
-```
-
-```{r}
-# income shocks and their transition probabilities of the household
-inc1 <- c(1/4, 2/2, 5/4)
-P1 <- matrix(rep(c(0.2, 0.6, 0.2), 3), nrow = 3, byrow = TRUE)
-
-# income shocks and their transition probabilities of the village
-inc1 <- c(1/4, 2/2, 5/4)
-P2 <- matrix(rep(c(0.2, 0.6, 0.2), 3), nrow = 3, byrow = TRUE)
-
-delta <- 0.85 # time discount factor
-sigma1 <- 1.0 # coefficient of relative risk aversion of HH1
-sigma2 <- 1.0 # coefficient of relative risk aversion of HH2
-pcphi <- 0.0 # punishment under autarky
-
-# transition super-matrix of income shocks
-R <- kronecker(P2, P1)
-
-# number of states
-# (number of income states for a household times
-# number of income states for the village)
-S <- length(inc1) * length(inc2)
-
-# Income matrix
-# (col 1: HH income, col 2: village income)
-inc_mat <- as.matrix(expand.grid(inc1, inc2))
-
-# Aggregate income in each state
-inc_ag <- rowSums(inc_mat)
-```
-
-```{r}
-n <- 20
-
-set.seed(37)
-
-# Sequence of income shocks
-income_realization <- seq(S)
-income_realization_label <- c(
-  "Low, Low", "Meidum, Low", "High, Low",
-  "Low, Medium", "Meidum, Medium", "High, Medium",
-  "Low, High", "Meidum, High", "High, High"
-  )
-income_seq <- sample(income_realization, 
-                     size = n,
-                     replace = TRUE,
-                     prob = R[1,])
-
-inc1_realization <- inc_mat[income_seq, 1]
-inc2_realization <- inc_mat[income_seq, 2]
-(income_realization_vec <- income_realization_label[income_seq])
-```
-
-```{r}
-
-# Vector of relative Pareto weights
-x_vec <- rep(NA, n + 1)
-x_vec[1] <- 1
-x_int_array_aut <- x_int_3_states
-
-# Relative Pareto weights on the history of income realizations
-for (t in seq(n)) {
-  x_int_temp <- x_int_array_aut[income_seq[t],] 
-  if (x_vec[t] < x_int_temp[1]) {
-    x_vec[t + 1] <- x_int_temp[1]
-  } else if (x_vec[t] > x_int_temp[2]) {
-    x_vec[t + 1] <- x_int_temp[2]
-  } else {
-    x_vec[t + 1] <- x_vec[t]
-  }
-}
-
-# Consumption and transfers, calculated based on x_vec
-cons1_vec <- rep(NA, n + 1)
-cons2_vec <- rep(NA, n + 1)
-transfer_1_to_2 <- rep(NA, n + 1)
-for (t in seq(2, n + 1)) {
-  f <- function(w) util_prime(inc_ag[income_seq[t - 1]] - w, sigma2) / util_prime(w, sigma1) - x_vec[t]
-  cons1_vec[t] <- uniroot(f, c(1e-6, (inc_ag[income_seq[t - 1]] - 1e-6)), tol = 1e-10, maxiter = 300)$root
-  cons2_vec[t] <- inc_ag[income_seq[t - 1]] - cons1_vec[t]
-  transfer_1_to_2[t] <- inc_mat[income_seq[t - 1], 1] - cons1_vec[t]
-}
-
-# Output table
-table_output <- tibble(
-  `Period` = seq(0, n),
-  `ln(x)` = log(x_vec),
-  `Income shocks` = c(NA, income_realization_vec),
-  `Net transfer (1 -> 2)` = transfer_1_to_2,
-  `Consumption (1)` = cons1_vec,
-  `Consumption (2)` = cons2_vec,
-  `Income (1)` = c(NA, inc1_realization),
-  `Income (2)` = c(NA, inc2_realization)
-)
-
-kable(table_output, digits = 3)
-
-```
-
-
-
-
-
-
+# References

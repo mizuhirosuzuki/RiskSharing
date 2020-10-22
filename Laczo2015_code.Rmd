@@ -3,6 +3,10 @@ title: "Computation of limited commitment model, based on Laczó (2015)"
 author: "Mizuhiro Suzuki"
 date: "10/18/2020"
 bibliography: risksharing.bib
+output:
+  html_document:
+    toc: true
+    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
@@ -34,7 +38,7 @@ The purpose of this document is to understand how to compute value functions and
 For this, I extensively use the codes by @Laczo2015, which can be downloaded [here](https://academic.oup.com/jeea/article/13/2/265/2319760#supplementary-data).
 Since I am not using her codes directly but rather I used her codes to understand the computational process, our codes look very different and all errors and bugs in the code below are on my own.
 
-## Model
+# Model
 
 In this document, I consider a problem of two households, unlike the model in @Laczo2015 that considers many households in a village.
 As in other studies, @Laczo2015 considers the constrained-efficient consumptioon alocatinos.
@@ -89,11 +93,11 @@ $$
 
 @Laczo2015 argues that, as in @Ligon2002, the evolution of relative Pareto weights is fully characterized by state-dependent intervals, which give the weights in the case where PCs are binding.
 
-## Computation
+# Computation
 
 In this section I conduct a numerical exercise to compute value functions under the limited commitment model with heterogeneous risk preferences.
 
-### Model settings
+## Model settings
 
 I simplify the model of @Laczo2015 and consider two households with $2 \times 2$ states.
 The income process are iid:
@@ -149,7 +153,7 @@ util_prime <- function(c, sigma) c ^ (- sigma)
   
 ```
 
-### Value of autarky
+## Value of autarky
 
 ```{r}
 delta <- 0.95 # time discount factor 
@@ -202,7 +206,7 @@ Uaut <- Uaut_func(inc1, P1, inc2, P2, delta, sigma1, sigma2, pcphi, util, util_p
 
 ```
 
-### Grid of relative Pareto weights and consumption on the grid points
+## Grid of relative Pareto weights and consumption on the grid points
 
 Here, I make the grid of relative Pareto weight of household 1, $x(s^t)$, on which I compute the values (I use the notation $x(s^t)$ rather than $x_i(s^t)$ since there are only two households).
 The number of grid points is $200$.
@@ -253,7 +257,7 @@ for (k in 1:S) {
 
 ```
 
-### Values under risk-sharing (full)
+## Values under risk-sharing (full)
 
 Now, I compute the values under full risk-sharing, which will be used as the initial values in value function iterations under the limited commitment model.
 Note that, under full risk sharing, the consumption only depends on the aggregate resources and time-invariate relative Pareto weights.
@@ -309,7 +313,7 @@ V2_full <- V_full[[2]]
 
 ```
 
-### Values under risk-sharing (limited commitment)
+## Values under risk-sharing (limited commitment)
 
 Next, I derive the state-dependent intervals of relative Pareto weights and calculate values under the model of limited commitment.
 To derive the intervals, I use the fact that at the limits of the intervals, the PCs are binding.
@@ -566,7 +570,7 @@ log(x_int_lc)
 
 ```
 
-### Make a pipeline based on the functions defined above
+## Make a pipeline based on the functions defined above
 
 ```{r}
 
@@ -642,7 +646,7 @@ V_lc_all_func <- function(
 
 ```
 
-### Sanity test: replication of Figure 1 in @Ligon2002
+## Sanity test: replication of Figure 1 in @Ligon2002
 
 For the sanity test of this function, I use it to replicate the Figure 1 in @Ligon2002.
 Here I use the parameter values in the original paper.
@@ -763,7 +767,7 @@ ggplot() +
 
 
 
-### Bonus: Static limited commitment
+## Bonus: Static limited commitment
 
 Now that I could replicate the figure in @Ligon2002, here I will create a similar graph, but under *static* limited commitment (@Coate1993).
 Unlike in dynamic limited commitment model, the initial relative Paretow weight, $x_0$, plays an important role to determine the transfers.
@@ -958,7 +962,7 @@ V_static_lc_func <- function(
 
 ```
 
-#### Make a pipeline based on the functions defined above
+### Make a pipeline based on the functions defined above
 
 ```{r}
 
@@ -1035,7 +1039,7 @@ V_static_lc_all_func <- function(
 
 ```
 
-#### Create a figure
+### Create a figure
 
 ```{r}
 
@@ -1152,7 +1156,7 @@ ggplot() +
 
 ```
 
-### Bonus 2: Comparative statics in @Laczo2014
+## Bonus 2: Comparative statics in @Laczo2014
 
 Here, for fun, I replicate Figure 1 in @Laczo2014, which sees how such intervals change with the degree of risk aversion.
 
@@ -1172,7 +1176,7 @@ sigma2 <- 1.5 # coefficient of relative risk aversion of HH2
 pcphi <- 0.0 # punishment under autarky
 
 # (Number of grid points on relative Pareto weight) - 1
-g <- 399
+g <- 599
 
 # Define utility function
 util <- function(c, sigma) {
@@ -1262,62 +1266,6 @@ ggplot() +
 
 The figure shows that the end-points of intervals shift to left as the degree of relative risk aversion increases.
 
-## Bonus 3: Three-state income process
-
-```{r}
-
-# income shocks and their transition probabilities of the household
-inc1 <- c(1/4, 2/2, 5/4)
-P1 <- matrix(rep(c(0.2, 0.6, 0.2), 3), nrow = 3, byrow = TRUE)
-
-# income shocks and their transition probabilities of the village
-inc1 <- c(1/4, 2/2, 5/4)
-P2 <- matrix(rep(c(0.2, 0.6, 0.2), 3), nrow = 3, byrow = TRUE)
-
-delta <- 0.85 # time discount factor
-sigma1 <- 1.0 # coefficient of relative risk aversion of HH1
-sigma2 <- 1.0 # coefficient of relative risk aversion of HH2
-pcphi <- 0.0 # punishment under autarky
-
-# (Number of grid points on relative Pareto weight) - 1
-g <- 399
-
-# Define utility function
-util <- function(c, sigma) {
-  if (sigma != 1) {
-    output = (c ^ (1 - sigma) - 1) / (1 - sigma)
-  } else {
-    output = log(c)
-  }
-  return(output)
-}
-util_prime <- function(c, sigma) c ^ (- sigma)
-  
-output_3_states <- V_lc_all_func(
-   inc1, P1, inc2, P2, g, 
-   delta, sigma1, sigma2, pcphi, util, util_prime
-)
-
-saveRDS(output_3_states, file.path("RDSfiles/laczo2015_dynamic_lc_3_states_output.rds"))
-```
-
-```{r, include = FALSE}
-output_3_states <- readRDS("RDSfiles/laczo2015_dynamic_lc_3_states_output.rds")
-```
-
-```{r}
-x_int_3_states <- output_3_states[[5]]
-rownames(x_int_3_states) <- c(
-  "Low, Low", "Meidum, Low", "High, Low",
-  "Low, Medium", "Meidum, Medium", "High, Medium",
-  "Low, High", "Meidum, High", "High, High"
-)
-colnames(x_int_3_states) <- c("x_low", "x_high")
-kable(x_int_3_states, digits = 3)
-```
-
-
-
-## References
+# References
 
 

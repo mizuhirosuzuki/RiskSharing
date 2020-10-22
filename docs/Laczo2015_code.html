@@ -288,17 +288,23 @@ $(document).ready(function () {
 <li>
   <a href="RiskSharingLit.html">Literature</a>
 </li>
-<li>
-  <a href="CR93_code.html">Coate and Ravallion (1993)</a>
-</li>
-<li>
-  <a href="LTW_code.html">Ligon et al. (2002)</a>
-</li>
-<li>
-  <a href="Laczo2015_code.html">Laczó (2015)</a>
-</li>
-<li>
-  <a href="TW88_code.html">Thomas and Worrall (1988)</a>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Limited Commitment
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="Laczo2015_code.html">Computation (Laczó (2015))</a>
+    </li>
+    <li>
+      <a href="LTW_code.html">Ligon et al. (2002)</a>
+    </li>
+    <li>
+      <a href="CR93_code.html">Coate and Ravallion (1993)</a>
+    </li>
+  </ul>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -318,10 +324,30 @@ $(document).ready(function () {
 
 </div>
 
+<div id="TOC">
+<ul>
+<li><a href="#model"><span class="toc-section-number">1</span> Model</a></li>
+<li><a href="#computation"><span class="toc-section-number">2</span> Computation</a><ul>
+<li><a href="#model-settings"><span class="toc-section-number">2.1</span> Model settings</a></li>
+<li><a href="#value-of-autarky"><span class="toc-section-number">2.2</span> Value of autarky</a></li>
+<li><a href="#grid-of-relative-pareto-weights-and-consumption-on-the-grid-points"><span class="toc-section-number">2.3</span> Grid of relative Pareto weights and consumption on the grid points</a></li>
+<li><a href="#values-under-risk-sharing-full"><span class="toc-section-number">2.4</span> Values under risk-sharing (full)</a></li>
+<li><a href="#values-under-risk-sharing-limited-commitment"><span class="toc-section-number">2.5</span> Values under risk-sharing (limited commitment)</a></li>
+<li><a href="#make-a-pipeline-based-on-the-functions-defined-above"><span class="toc-section-number">2.6</span> Make a pipeline based on the functions defined above</a></li>
+<li><a href="#sanity-test-replication-of-figure-1-in-ligon2002"><span class="toc-section-number">2.7</span> Sanity test: replication of Figure 1 in <span class="citation">Ligon, Thomas, and Worrall (2002)</span></a></li>
+<li><a href="#bonus-static-limited-commitment"><span class="toc-section-number">2.8</span> Bonus: Static limited commitment</a><ul>
+<li><a href="#make-a-pipeline-based-on-the-functions-defined-above-1"><span class="toc-section-number">2.8.1</span> Make a pipeline based on the functions defined above</a></li>
+<li><a href="#create-a-figure"><span class="toc-section-number">2.8.2</span> Create a figure</a></li>
+</ul></li>
+<li><a href="#bonus-2-comparative-statics-in-laczo2014"><span class="toc-section-number">2.9</span> Bonus 2: Comparative statics in <span class="citation">Laczó (2014)</span></a></li>
+</ul></li>
+<li><a href="#references">References</a></li>
+</ul>
+</div>
 
 <p>The purpose of this document is to understand how to compute value functions and consumption under risk-sharing with limited commitment. For this, I extensively use the codes by <span class="citation">Laczó (2015)</span>, which can be downloaded <a href="https://academic.oup.com/jeea/article/13/2/265/2319760#supplementary-data">here</a>. Since I am not using her codes directly but rather I used her codes to understand the computational process, our codes look very different and all errors and bugs in the code below are on my own.</p>
-<div id="model" class="section level2">
-<h2>Model</h2>
+<div id="model" class="section level1">
+<h1><span class="header-section-number">1</span> Model</h1>
 <p>In this document, I consider a problem of two households, unlike the model in <span class="citation">Laczó (2015)</span> that considers many households in a village. As in other studies, <span class="citation">Laczó (2015)</span> considers the constrained-efficient consumptioon alocatinos. The social planner solves the following problem:</p>
 <p><span class="math display">\[\begin{align*}
   &amp;\max_{\{c_{it}(s^t)\}} \sum_i \lambda_i \sum_{t = 1}^{\infty} \sum_{s^t} \delta^t \pi(s^t) u_i(c_{it}(s^t)) \\
@@ -351,11 +377,11 @@ $(document).ready(function () {
 \]</span></p>
 <p><span class="citation">Laczó (2015)</span> argues that, as in <span class="citation">Ligon, Thomas, and Worrall (2002)</span>, the evolution of relative Pareto weights is fully characterized by state-dependent intervals, which give the weights in the case where PCs are binding.</p>
 </div>
-<div id="computation" class="section level2">
-<h2>Computation</h2>
+<div id="computation" class="section level1">
+<h1><span class="header-section-number">2</span> Computation</h1>
 <p>In this section I conduct a numerical exercise to compute value functions under the limited commitment model with heterogeneous risk preferences.</p>
-<div id="model-settings" class="section level3">
-<h3>Model settings</h3>
+<div id="model-settings" class="section level2">
+<h2><span class="header-section-number">2.1</span> Model settings</h2>
 <p>I simplify the model of <span class="citation">Laczó (2015)</span> and consider two households with <span class="math inline">\(2 \times 2\)</span> states. The income process are iid:</p>
 <p><span class="math display">\[
   y_1 = [2/3, 4/3],\ y_2 = [2/3, 4/3], \\
@@ -398,8 +424,8 @@ util &lt;- function(c, sigma) {
 }
 util_prime &lt;- function(c, sigma) c ^ (- sigma)</code></pre>
 </div>
-<div id="value-of-autarky" class="section level3">
-<h3>Value of autarky</h3>
+<div id="value-of-autarky" class="section level2">
+<h2><span class="header-section-number">2.2</span> Value of autarky</h2>
 <pre class="r"><code>delta &lt;- 0.95 # time discount factor 
 sigma1 &lt;- 1.0 # coefficient of relative risk aversion of HH1
 sigma2 &lt;- 1.0 # coefficient of relative risk aversion of HH2
@@ -448,8 +474,8 @@ Uaut_func &lt;- function(
 
 Uaut &lt;- Uaut_func(inc1, P1, inc2, P2, delta, sigma1, sigma2, pcphi, util, util_prime)</code></pre>
 </div>
-<div id="grid-of-relative-pareto-weights-and-consumption-on-the-grid-points" class="section level3">
-<h3>Grid of relative Pareto weights and consumption on the grid points</h3>
+<div id="grid-of-relative-pareto-weights-and-consumption-on-the-grid-points" class="section level2">
+<h2><span class="header-section-number">2.3</span> Grid of relative Pareto weights and consumption on the grid points</h2>
 <p>Here, I make the grid of relative Pareto weight of household 1, <span class="math inline">\(x(s^t)\)</span>, on which I compute the values (I use the notation <span class="math inline">\(x(s^t)\)</span> rather than <span class="math inline">\(x_i(s^t)\)</span> since there are only two households). The number of grid points is <span class="math inline">\(200\)</span>.</p>
 <pre class="r"><code># (Number of grid points on relative Pareto weight) - 1
 g &lt;- 199
@@ -482,8 +508,8 @@ for (k in 1:S) {
   }
 }</code></pre>
 </div>
-<div id="values-under-risk-sharing-full" class="section level3">
-<h3>Values under risk-sharing (full)</h3>
+<div id="values-under-risk-sharing-full" class="section level2">
+<h2><span class="header-section-number">2.4</span> Values under risk-sharing (full)</h2>
 <p>Now, I compute the values under full risk-sharing, which will be used as the initial values in value function iterations under the limited commitment model. Note that, under full risk sharing, the consumption only depends on the aggregate resources and time-invariate relative Pareto weights. Hence, I numerically solve the following Bellman equation:</p>
 <p><span class="math display">\[
   V_i^{full}(s_t, x) = u_i(c_{it}(s_t, x)) + \delta \sum_{s^{t + 1}} \pi(s_{t + 1} | s_t) V_{i}^{full}(s_{t + 1}, x).
@@ -530,8 +556,8 @@ V_full &lt;- V_full_func(
 V1_full &lt;- V_full[[1]]
 V2_full &lt;- V_full[[2]]</code></pre>
 </div>
-<div id="values-under-risk-sharing-limited-commitment" class="section level3">
-<h3>Values under risk-sharing (limited commitment)</h3>
+<div id="values-under-risk-sharing-limited-commitment" class="section level2">
+<h2><span class="header-section-number">2.5</span> Values under risk-sharing (limited commitment)</h2>
 <p>Next, I derive the state-dependent intervals of relative Pareto weights and calculate values under the model of limited commitment. To derive the intervals, I use the fact that at the limits of the intervals, the PCs are binding. For instance, to compute the lower limit <span class="math inline">\(\underline{x}^h(s)\)</span>, where <span class="math inline">\(h\)</span> indicates <span class="math inline">\(h\)</span>’th iteration, the PC of the household 1 is binding:</p>
 <p><span class="math display">\[
   u_1(c_1^h(s)) + \delta \sum_{s&#39;} \pi(s&#39; | s) V_1^{h - i} (s&#39;, \underline{x}^h(s)) = U_1^{aut}(s),
@@ -752,8 +778,8 @@ V2_full &lt;- V_full[[2]]</code></pre>
   return(list(V1, V2, x_int))
 }</code></pre>
 </div>
-<div id="make-a-pipeline-based-on-the-functions-defined-above" class="section level3">
-<h3>Make a pipeline based on the functions defined above</h3>
+<div id="make-a-pipeline-based-on-the-functions-defined-above" class="section level2">
+<h2><span class="header-section-number">2.6</span> Make a pipeline based on the functions defined above</h2>
 <pre class="r"><code>V_lc_all_func &lt;- function(
   inc1, P1, inc2, P2, g,
   delta, sigma1, sigma2, pcphi,
@@ -824,8 +850,8 @@ V2_full &lt;- V_full[[2]]</code></pre>
   return(list(V1_full, V2_full, V1_lc, V2_lc, x_int_lc))
 }</code></pre>
 </div>
-<div id="sanity-test-replication-of-figure-1-in-ligon2002" class="section level3">
-<h3>Sanity test: replication of Figure 1 in <span class="citation">Ligon, Thomas, and Worrall (2002)</span></h3>
+<div id="sanity-test-replication-of-figure-1-in-ligon2002" class="section level2">
+<h2><span class="header-section-number">2.7</span> Sanity test: replication of Figure 1 in <span class="citation">Ligon, Thomas, and Worrall (2002)</span></h2>
 <p>For the sanity test of this function, I use it to replicate the Figure 1 in <span class="citation">Ligon, Thomas, and Worrall (2002)</span>. Here I use the parameter values in the original paper. I choose the income process <span class="math inline">\((y_l, y_h) = (2/3, 4/3)\)</span> and <span class="math inline">\((p_l, p_h) = (0.1, 0.9)\)</span> for both households so that the mean is <span class="math inline">\(1\)</span> and the ratio <span class="math inline">\(y_l / y_h\)</span> is 1/2 as in the paper. Also, the penalty under autarky is absent as in the original numerical exercise.</p>
 <pre class="r"><code># income shocks and their transition probabilities of the household
 inc1 &lt;- c(2/3, 4/3)
@@ -922,8 +948,8 @@ ggplot() +
   ylab(&quot;log of the relative Pareto weights (x)&quot;)</code></pre>
 <p><img src="Laczo2015_code_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
 </div>
-<div id="bonus-static-limited-commitment" class="section level3">
-<h3>Bonus: Static limited commitment</h3>
+<div id="bonus-static-limited-commitment" class="section level2">
+<h2><span class="header-section-number">2.8</span> Bonus: Static limited commitment</h2>
 <p>Now that I could replicate the figure in <span class="citation">Ligon, Thomas, and Worrall (2002)</span>, here I will create a similar graph, but under <em>static</em> limited commitment (<span class="citation">Coate and Ravallion (1993)</span>). Unlike in dynamic limited commitment model, the initial relative Paretow weight, <span class="math inline">\(x_0\)</span>, plays an important role to determine the transfers. Since past history does not matter in the static limited commitment model, the value function can be written as</p>
 <p><span class="math display">\[
   V_i(s) = u_i(c_i(s, x_s)) + \delta \sum_{s&#39;} \pi(s&#39;|s) V_i(s&#39;),
@@ -1095,8 +1121,8 @@ ggplot() +
 
   return(list(V1, V2, x_int))
 }</code></pre>
-<div id="make-a-pipeline-based-on-the-functions-defined-above-1" class="section level4">
-<h4>Make a pipeline based on the functions defined above</h4>
+<div id="make-a-pipeline-based-on-the-functions-defined-above-1" class="section level3">
+<h3><span class="header-section-number">2.8.1</span> Make a pipeline based on the functions defined above</h3>
 <pre class="r"><code>V_static_lc_all_func &lt;- function(
   inc1, P1, inc2, P2, g,
   delta, sigma1, sigma2, pcphi,
@@ -1168,8 +1194,8 @@ ggplot() +
   return(list(V1_full, V2_full, V1_lc, V2_lc, x_int_lc))
 }</code></pre>
 </div>
-<div id="create-a-figure" class="section level4">
-<h4>Create a figure</h4>
+<div id="create-a-figure" class="section level3">
+<h3><span class="header-section-number">2.8.2</span> Create a figure</h3>
 <pre class="r"><code># income shocks and their transition probabilities of the household
 inc1 &lt;- c(2/3, 4/3)
 P1 &lt;- matrix(rep(c(0.1, 0.9), 2), nrow = 2, byrow = TRUE)
@@ -1269,8 +1295,8 @@ ggplot() +
 <p><img src="Laczo2015_code_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
 </div>
 </div>
-<div id="bonus-2-comparative-statics-in-laczo2014" class="section level3">
-<h3>Bonus 2: Comparative statics in <span class="citation">Laczó (2014)</span></h3>
+<div id="bonus-2-comparative-statics-in-laczo2014" class="section level2">
+<h2><span class="header-section-number">2.9</span> Bonus 2: Comparative statics in <span class="citation">Laczó (2014)</span></h2>
 <p>Here, for fun, I replicate Figure 1 in <span class="citation">Laczó (2014)</span>, which sees how such intervals change with the degree of risk aversion.</p>
 <pre class="r"><code># income shocks and their transition probabilities of the household
 inc1 &lt;- c(2/3, 4/3)
@@ -1285,7 +1311,7 @@ sigma2 &lt;- 1.5 # coefficient of relative risk aversion of HH2
 pcphi &lt;- 0.0 # punishment under autarky
 
 # (Number of grid points on relative Pareto weight) - 1
-g &lt;- 399
+g &lt;- 599
 
 # Define utility function
 util &lt;- function(c, sigma) {
@@ -1358,8 +1384,8 @@ ggplot() +
 <p>The figure shows that the end-points of intervals shift to left as the degree of relative risk aversion increases.</p>
 </div>
 </div>
-<div id="references" class="section level2 unnumbered">
-<h2>References</h2>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
 <div id="refs" class="references">
 <div id="ref-Coate1993">
 <p>Coate, Stephen, and Martin Ravallion. 1993. “Reciprocity without commitment: Characterization and performance of informal insurance arrangements.” <em>Journal of Development Economics</em> 40 (1): 1–24. <a href="https://doi.org/10.1016/0304-3878(93)90102-S">https://doi.org/10.1016/0304-3878(93)90102-S</a>.</p>

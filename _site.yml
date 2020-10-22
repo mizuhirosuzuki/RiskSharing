@@ -7,14 +7,14 @@ navbar:
     href: index.html
   - text: "Literature"
     href: RiskSharingLit.html
-  - text: "Coate and Ravallion (1993)"
-    href: CR93_code.html
-  - text: "Ligon et al. (2002)"
-    href: LTW_code.html
-  - text: "Laczó (2015)"
-    href: Laczo2015_code.html
-  - text: "Thomas and Worrall (1988)"
-    href: TW88_code.html
+  - text: Limited Commitment
+    menu:
+      - text: "Computation (Laczó (2015))"
+        href: Laczo2015_code.html
+      - text: "Ligon et al. (2002)"
+        href: LTW_code.html
+      - text: "Coate and Ravallion (1993)"
+        href: CR93_code.html
 output:
   html_document:
     theme: cosmo
