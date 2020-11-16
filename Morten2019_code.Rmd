@@ -63,41 +63,42 @@ Here, $\mathcal{I}^i(j) = 1$ if $j$ indicates that $i$ migrates and $\mathcal{I}
 
 ## Lagrangian formulation
 
-The social planner chooses consumption and migration decision of each household in each period to meximize the weighted sum of households' expected lifetime utilities:
+The social planner chooses consumption ($c_{it}$) and migration decision ($j_t$) of each household in each period to meximize the weighted sum of households' expected lifetime utilities:
 
 $$
-  \sum_i \lambda_i \sum_{t = 1}^{\infty} \sum_{h^t} \beta^t \pi(h^t) \left( u(c_{it}(h^t)) - \mathcal{I}^i(j_t) d(z) \right),
+  E_1 \left[ \sum_i \lambda_i \sum_{t = 1}^{\infty} \beta^t \left( u(c_{it}) - \mathcal{I}^i(j_t) d(z) \right) \right],
 $$
-where $\lambda_i$ is the initial Pareto weight of $i$ and $\pi(h^t)$ is the probability that the history $h_t$ is realized.
+where $\lambda_i$ is the initial Pareto weight of $i$.
 The constraints for this maximization problem are the followings:
 
 1. Optimal migration decision to maximize the total lifetime utility:
 
 $$
-  \max_{j_{t + 1}} E \left[ \sum_{r = t + 1}^{\infty} \sum_{h^r} \beta^{r - (t + 1)} \pi(h^r|s_{t + 1}, j_{t + 1}, h^t) \left\{ u(c_{ir}(h^r)) - \mathcal{I}^i(j_r) d(z)) \right\} | s_{t + 1}, j_{t + 1}, h^t \right] \ge \Omega^i (s_{t + 1}; z) \quad \forall h^t, \forall s_{t + 1}, \forall t,
+  j_{t} = \arg \max_{j} E \left[ \sum_{r = t + 1}^{\infty} \beta^{r - (t + 1)} \left\{ u(c_{ir}) - \mathcal{I}^i(j_r) d(z) \right\} | s_{t + 1}, j, h^t \right] \quad \forall h^t, \forall s_{t + 1}, \forall t
 $$
 
 
 2. After-migration constraints:
 
 $$
-  \sum_{r = t}^{\infty} \sum_{h^r} \beta^{r - t} \pi(h^r|h^t) \left\{ u(c_{ir}(h^r)) - \mathcal{I}^i(j_r) d(z)) \right\} \ge \tilde{\Omega}^i (s_t, q_t, j_t; z) \quad \forall h^t, \forall t,
+  E_t \left[ \sum_{r = t}^{\infty} \beta^{r - t} \left\{ u(c_{ir}) - \mathcal{I}^i(j_r) d(z) \right\} \right] \ge \tilde{\Omega}^i (s_t, q_t, j_t; z) \quad \forall h^t, \forall t
 $$
-where $\pi(h^r|h^t)$ is the probability that the history $h^r$ is realized conditional on the history $h^t$.
 
 3. Before-migration constraints (for the following period):
 
 $$
-  \max_{j_{t + 1}} E \left[ \sum_{r = t + 1}^{\infty} \sum_{h^r} \beta^{r - (t + 1)} \pi(h^r|s_{t + 1}, j_{t + 1}, h^t) \left\{ u(c_{ir}(h^r)) - \mathcal{I}^i(j_r) d(z)) \right\} | s_{t + 1}, j_{t + 1}, h^t \right] \ge \Omega^i (s_{t + 1}; z) \quad \forall h^t, \forall s_{t + 1}, \forall t,
+  E \left[ \sum_{r = t + 1}^{\infty} \beta^{r - (t + 1)} \left\{ u(c_{ir}) - \mathcal{I}^i(j_r) d(z) \right\} | s_{t + 1}, j_{t + 1}, h^t \right] \ge \Omega^i (s_{t + 1}; z) \quad \forall h^t, \forall s_{t + 1}, \forall t
 $$
-where $\pi(h^r | s_{t + 1}, j_{t + 1}, h^t)$ is the porbability that the history $h^r$ is realized conditional on $(s_{t + 1}, j_{t + 1}, h^t)$.
 
-3. Aggregate resource constraints:
+4. Aggregate resource constraints:
 
 $$
   \sum_i c_{it}(h^t) \le \sum_i \left( \tilde{y}^i(s_t, q_t, j_t; z) - \mathcal{I}^i(j_t) \tilde{d}(z) \right) \quad \forall h^t, \forall t,
 $$
 where $\tilde{d}(z)$ is the physical cost of migration, which is a part of $d(z)$.
+
+For this maximization problem, I consider the two step procedure.
+In the first step, I derive 
 
 Denoting the Lagrangian multipliers of these constraints by $\delta^t \pi(h^t) \mu_i(h^t)$, $\delta^t \pi(h^t) \xi_i(s_{t + 1}, h^t)$, and $\delta^t \pi(h^t) \rho(h^t)$, the Lagrangian is
 
