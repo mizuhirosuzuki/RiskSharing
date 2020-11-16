@@ -329,7 +329,7 @@ $$
 $$
 
 Notice that, once the PC binds, the past history, which is summarized by $x_{t - 1}$, does not matter.
-This property is called "amnesia" (@Kocherlakota1996).
+This property is called "amnesia" (@Kocherlakota1996) or "forgiveness" (@Ligon2002).
 Since $\underline{x}^h(s)$ may not be on the grid $q$, linear interpolation is used to compute $V_1^{h - 1}(s', \underline{x}^h(s))$.
 
 Similarly, $\overline{x}^h(s)$ is computed using the binding PC of the household 2

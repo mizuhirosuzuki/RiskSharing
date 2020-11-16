@@ -1,0 +1,156 @@
+---
+title: "Computation of of the model in  Morten (2019)"
+author: "Mizuhiro Suzuki"
+date: "11/13/2020"
+bibliography: risksharing.bib
+output:
+  html_document:
+    toc: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+packages <- c(
+  "tidyverse",
+  "knitr",
+  "nleqslv",
+  "ggrepel",
+  "rootSolve",
+  "BB",
+  "pracma",
+  "latex2exp"
+)
+
+pacman::p_load(packages, character.only = TRUE)
+```
+
+# Model
+
+Consider a model with two households with identical preferences.
+The model considers two sub-periods in one period: before-migration and after-migration.
+Correspondingly, there are two value functions and two sets of promise-keeping constraints.
+The before-migration constraint applies at the time when migration decisions are made: the expected value of the following the social planner's migration rule needs to be at least as great as the expected value of making an independent migration decision and then staying in autarky.
+The second constraint, the after-migration constraint, applied after migration decisions have been made and all migration outcomes have been realized: the value of following the social planner's risk-sharing transfer rule needs to be at least as great as the value of consuming the current income and then remaining in autarky.
+
+## Values of outside options
+
+Notice that the outside options at the two points in time are different due to random realization in migration income.
+The before-migration outside value, $\Omega^i$, is the value of making a decision whether or not to migration today and then facing the same choice the following period:
+
+$$
+  \Omega^i(s; z) = \max \{ u(y^i(s; z)), E_q [u(\tilde{y}^i(s, q, j; z)) - d(z)] \} + \beta \sum_r \pi^s(r|s) \Omega^i(r; z).
+$$
+Here, 
+
+- $s$: realization of village income, $q$: realization of migration income, $j$: migration decision
+- $z$: characteristics of the two households
+- $y^i(s;z)$: village income
+- $\tilde{y}^i(s, q, j;z)$: after-migration income (village income + migration income)
+- $d(z)$: utility cost of migration
+- $\pi^s(r|s)$: the transition probability of village income realization from state $s$ to state $r$.
+
+That is, the autarky value is the value without risk-sharing, in which households choose whether to migrate or not.
+Notice that, once in autarky before migration, the outside value after migration does not matter since in anyway transfers do not happen.
+
+The after-migration outside value, $\tilde{\Omega}^i$ is the value of consuming period $t$ income (i.e. without transfers), conditional on the migration choice, the state in the village, and the state at the destination, and then teturning to the village and getting the before-migration level of autarky the following period:
+
+$$
+  \tilde{\Omega}^i(s, q, j; z) = u(\tilde{y}^i(s, q, j;z)) - \mathcal{I}^i(j) d(z) + \beta \sum_r \pi^s(r|s) \Omega_i(r; z).
+$$
+
+Here, $\mathcal{I}^i(j) = 1$ if $j$ indicates that $i$ migrates and $\mathcal{I}^i(j) = 0$ otherwise.
+
+## Lagrangian formulation
+
+The social planner chooses consumption and migration decision of each household in each period to meximize the weighted sum of households' expected lifetime utilities:
+
+$$
+  \sum_i \lambda_i \sum_{t = 1}^{\infty} \sum_{h^t} \beta^t \pi(h^t) \left( u(c_{it}(h^t)) - \mathcal{I}^i(j_t) d(z) \right),
+$$
+where $\lambda_i$ is the initial Pareto weight of $i$ and $\pi(h^t)$ is the probability that the history $h_t$ is realized.
+The constraints for this maximization problem are the followings:
+
+1. Optimal migration decision to maximize the total lifetime utility:
+
+$$
+  \max_{j_{t + 1}} E \left[ \sum_{r = t + 1}^{\infty} \sum_{h^r} \beta^{r - (t + 1)} \pi(h^r|s_{t + 1}, j_{t + 1}, h^t) \left\{ u(c_{ir}(h^r)) - \mathcal{I}^i(j_r) d(z)) \right\} | s_{t + 1}, j_{t + 1}, h^t \right] \ge \Omega^i (s_{t + 1}; z) \quad \forall h^t, \forall s_{t + 1}, \forall t,
+$$
+
+
+2. After-migration constraints:
+
+$$
+  \sum_{r = t}^{\infty} \sum_{h^r} \beta^{r - t} \pi(h^r|h^t) \left\{ u(c_{ir}(h^r)) - \mathcal{I}^i(j_r) d(z)) \right\} \ge \tilde{\Omega}^i (s_t, q_t, j_t; z) \quad \forall h^t, \forall t,
+$$
+where $\pi(h^r|h^t)$ is the probability that the history $h^r$ is realized conditional on the history $h^t$.
+
+3. Before-migration constraints (for the following period):
+
+$$
+  \max_{j_{t + 1}} E \left[ \sum_{r = t + 1}^{\infty} \sum_{h^r} \beta^{r - (t + 1)} \pi(h^r|s_{t + 1}, j_{t + 1}, h^t) \left\{ u(c_{ir}(h^r)) - \mathcal{I}^i(j_r) d(z)) \right\} | s_{t + 1}, j_{t + 1}, h^t \right] \ge \Omega^i (s_{t + 1}; z) \quad \forall h^t, \forall s_{t + 1}, \forall t,
+$$
+where $\pi(h^r | s_{t + 1}, j_{t + 1}, h^t)$ is the porbability that the history $h^r$ is realized conditional on $(s_{t + 1}, j_{t + 1}, h^t)$.
+
+3. Aggregate resource constraints:
+
+$$
+  \sum_i c_{it}(h^t) \le \sum_i \left( \tilde{y}^i(s_t, q_t, j_t; z) - \mathcal{I}^i(j_t) \tilde{d}(z) \right) \quad \forall h^t, \forall t,
+$$
+where $\tilde{d}(z)$ is the physical cost of migration, which is a part of $d(z)$.
+
+Denoting the Lagrangian multipliers of these constraints by $\delta^t \pi(h^t) \mu_i(h^t)$, $\delta^t \pi(h^t) \xi_i(s_{t + 1}, h^t)$, and $\delta^t \pi(h^t) \rho(h^t)$, the Lagrangian is
+
+$$
+  \sum_{t = 1}^{\infty} \sum_{h^t} \delta^t \pi(h^t) \left\{ \sum_i \left[ \lambda_i u(c_{it}(h^t)) + \\
+  \mu_i(h^t) \left( \sum_{r = t}^{\infty} \sum_{s^r} \delta^{r - t} \pi(h^r|h^t) \left\{ u(c_{ir} h^r) - \mathcal{I}^i(j_r) d(z) \right\} - \tilde{\Omega}^i(s_t, q_t, j_t; z) \right) + \\
+  \sum_{s_{t + 1}} \xi_i(s_{t + 1}, h^t) \left( \max_{j_{t + 1}} E \left[  \sum_{r = t}^{\infty} \sum_{s^r} \delta^{r - t} \pi(h^r|h^t) \left\{ u(c_{ir} h^r) - \mathcal{I}^i(j_r) d(z) \right\} - \tilde{\Omega}^i(s_t, q_t, j_t; z) | s_{t + 1}, j_{t + 1}, h^t \right]  - \Omega^i(s_{t + 1}; z) \right) \right] + \\
+  \rho(h^t) \sum_i \left( \tilde{y}^i(s_t, q_t, j_t; z) - \left( c_{it}(h^t) + \mathcal{I}^i(j_t) \tilde{d}(z) \right) \right) \right\}.
+$$
+
+<!--
+## Optimization problem
+
+Before migration, migration decision of two households is made to maximize total utility:
+
+$$
+  V_s(U_s(h^{t - 1}; z); z) = \max_j \tilde{V}_{sj}(U_s(h^{t - 1}; z); z).
+$$
+
+Here, $V_s(U_s(h^{t - 1}; z); z)$ is the value function of HH2 before migration, given the promised uility of HH1, $U_s(h^{t - 1}; z)$, and $\tilde{V}_{sj}(U_s(h^{t - 1}; z); z)$ is the value function of HH2 after migration, conditional on the migration decision $j$ is made.
+The after-migration value function is defined as follows:
+
+$$
+  \tilde{V}_{sj}(U_s(h^{t - 1}; z); z) = \max_{\tau(s, q, j, h^{t - 1}; z), \{U_r(h^t; z) \}} E_q \left[ u( \tilde{y}^2(s, q, j; z) + \tau(s, q, j, h^{t - 1}; z)) - \mathcal{I}^2(j) d(z) + \beta \sum_r \pi^s(r|s) V_r(U_r(h^t; z); z) \right],
+$$
+where $h^t$ is the history of state variables up to $t$ ($h^t = \{s_t, q_t, j_t, h^{t - 1} \}$), subject to the following conditions:
+
+1. Promising keeping in expectation:
+$$
+  E_q \left[ u(\tilde{y}^1(s, q, j; z) - \tau(s, q, j, h^{t - 1}; z)) - \mathcal{I}^1(j) d(z) + \beta \sum_r \pi^s(r|s) U_r(h^t; z) \right] = U_s(h^{t - 1}; z) \quad \forall j
+$$
+2. After migration constraints:
+
+$$
+  u(\tilde{y}^1(s, q, j; z) - \tau(s, q, j, h^{t - 1}; z)) - \mathcal{I}^1(j) d(z) + \beta \sum_r \pi^s(r|s) U_r(h^t; z) \ge \tilde{\Omega}^1 (s, q, j; z) \quad \forall s, q, j
+$$
+$$
+  u(\tilde{y}^2(s, q, j; z) + \tau(s, q, j, h^{t - 1}; z)) - \mathcal{I}^2(j) d(z) + \beta \sum_r \pi^s(r|s) V_r(U_r(h^t; z); z) \ge \tilde{\Omega}^2 (s, q, j; z) \quad \forall s, q, j
+$$
+3. Before-migration constraints (for the following period):
+
+$$
+  U_r(s, q, j, h^{t - 1}; z) \ge \Omega^1(r; z) \quad \forall r, s, q, j
+$$
+$$
+  V_r(U_r(s, q, j, h^{t - 1}; z); z)  \ge \Omega^2(r; z) \quad \forall r, s, q, j
+$$
+
+-->
+
+
+```{r}
+
+
+
+```

@@ -31,7 +31,7 @@ The seminal paper in this literature is @Townsend1994, and I introduce studies b
 ## Tests of full risk-sharing model in the U.S.
 
 There are several studies applying the above estimation equation to the US data.
-One of the main focuses of these studies is th test of market completeness:
+One of the main focuses of these studies is the test of market completeness:
 under ...
 
 ### @Mace1991
@@ -81,8 +81,8 @@ But this may be less relevant in the context of developing countries since polic
 
 In the theoretical part of this paper, @Cochrane1991 allows heterogeneous risk and time preferences across households.
 However, in his "cross-sectional" analysis, if the economic shocks are independent of these variables, this heterogeneity does not matter for the test of full risk-sharing.
-Also, @Townsend1994 conducts a time-series analysis for each household in ICRISAT data, which allows different preferrences for different households.
-One problem in this analysis is the temporal length of the data: there are only 10 years of data, which seems too short to conduct a time-series anlaysis.
+Also, @Townsend1994 conducts a time-series analysis for each household in ICRISAT data, which allows different preferences for different households.
+One problem in this analysis is the temporal length of the data: there are only 10 years of data, which seems too short to conduct a time-series analysis.
 Here I will introduce works explicitly focusing on the heterogeneouos preferences of households in the context of risk sharing.
 
 ### @Kurosaki2001
@@ -133,7 +133,6 @@ One problem of this analysis is that, as pointed out in the paper, the interpret
 As @Ligon2016 argues, given that the full risk sharing hypothesis is rejected, the theory does not provide an interpretation that the equation above is a consumption function.
 In this sense, interpreting the estimates of $b_i$ and $a_i$ as something reflecting time and risk preferences can be misleading, and more complete model needs to explain why full risk-sharing fails while taking into account preference heterogeneity.
 @Laczo2015 can be seen as a work attempting this, using dynamic limited commitment as the factor preventing full risk-sharing.
-Also, the estimate on household income shock could be overestimated, as I will discuss when I introduce @Schulhofer-Wohl2011.
 
 ### @Schulhofer-Wohl2011
 
@@ -196,11 +195,11 @@ Notice that the second part is time-invariant and controlled by household fixed 
 Therefore, with an error term and household income, the regression equation with heterogeneous preferences becomes
 
 $$
-  \log c_{it} = \eta_i \frac{1}{N} \sum_i \log c_{it} + g \log X_{it} + \left( \frac{\log \alpha_i}{\gamma_i} - \eta_i \frac{1}{N} \sum_i \frac{\log \alpha_i}{\gamma_i} \right) + \left( \epsilon_{it} + \eta_i \sum_j \epsilon_{jt} \right).
+  \log c_{it} = \eta_i \frac{1}{N} \sum_i \log c_{it} + g \log X_{it} + \left( \frac{\log \alpha_i}{\gamma_i} - \eta_i \frac{1}{N} \sum_i \frac{\log \alpha_i}{\gamma_i} \right) + \left( \epsilon_{it} - \eta_i \frac{1}{N} \sum_j \epsilon_{jt} \right).
 $$
 
-However, this is still problematic since $\log X_{it}$ and $\eta_i$ can be positively correlated for the same reason as above.
-This suggests that the estimate in @Kurosaki2011 might be biased as well, and this might be why @Schulhofer-Wohl2011 decides to obtain and control for $\lambda_t$ directly rather than using this transformation.
+Assuming that $\frac{1}{N} \sum_j \epsilon_{jt}$ is constant across time, the last term is removed by including household fixed effects.
+Therefore, the coefficients $\eta_i$ and $g$ can be estimated without deriving $\lambda_t$.
 
 Also, this paper considers transaction cost to explain imperfect risk-sharing and to give an interpretation to the coefficient and household income.
 In particular, he assumes that the resource is destroyed if household consumption and income differ, and the cost if specified to be $\phi_i \frac{c}{2} \left( \log \frac{c}{X} \right)^2$.
@@ -211,10 +210,24 @@ $$
 $$
 Hence, given that the full risk-sharing hypothesis is rejected, the running a regression with heterogeneous preferences is equivalent to estimating this equation.
 Using PSID data, he shows that accounting for heterogeneous risk and time preferences decreases the estimate of $g$, which is consistent with his argument that ignoring heterogeneous preferences results in overrejction of the full risk-sharing hypothesis.
+He also finds that estimates based on homogenenous preferences and on heterogeneous preferences are statistically significantly different.
+He also finds that the models with homogeneous preferences and with heterogeneous preferences, where the former is nested in the latter, give statistically significantly different estimates.
+This means the rejection of the hypothesis that the preferences are common across households.
 
 ### @Mazzocco2012
 
+This paper (i) proposes a test of homogeneous preferences under full insurance, and (ii) proposes a test to evaluate efficiency of risk sharing under heterogeneous preferences.
+Here only risk preferences are considered due to the relatively small data, although the authors state that it is easy to incorporate time-preference heterogeneity in the model and the tests.
+
+
+
 ### @Chiappori2014
+
+## Other related studies
+
+### @Ogaki2001
+
+
 
 # Failure of full risk-sharing: why?
 
