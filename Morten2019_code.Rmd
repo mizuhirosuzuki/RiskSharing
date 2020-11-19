@@ -61,6 +61,8 @@ $$
 
 Here, $\mathcal{I}^i(j) = 1$ if $j$ indicates that $i$ migrates and $\mathcal{I}^i(j) = 0$ otherwise.
 
+<!--
+
 ## Lagrangian formulation
 
 The social planner chooses consumption ($c_{it}$) and migration decision ($j_t$) of each household in each period to meximize the weighted sum of households' expected lifetime utilities:
@@ -109,7 +111,8 @@ $$
   \rho(h^t) \sum_i \left( \tilde{y}^i(s_t, q_t, j_t; z) - \left( c_{it}(h^t) + \mathcal{I}^i(j_t) \tilde{d}(z) \right) \right) \right\}.
 $$
 
-<!--
+-->
+
 ## Optimization problem
 
 Before migration, migration decision of two households is made to maximize total utility:
@@ -118,7 +121,8 @@ $$
   V_s(U_s(h^{t - 1}; z); z) = \max_j \tilde{V}_{sj}(U_s(h^{t - 1}; z); z).
 $$
 
-Here, $V_s(U_s(h^{t - 1}; z); z)$ is the value function of HH2 before migration, given the promised uility of HH1, $U_s(h^{t - 1}; z)$, and $\tilde{V}_{sj}(U_s(h^{t - 1}; z); z)$ is the value function of HH2 after migration, conditional on the migration decision $j$ is made.
+Here, $V_s(U_s(h^{t - 1}; z); z)$ is the value function of HH2 before migration, given the promised utility of HH1, $U_s(h^{t - 1}; z)$, and $\tilde{V}_{sj}(U_s(h^{t - 1}; z); z)$ is the value function of HH2 after migration, conditional on the migration decision $j$ is made.
+Also, $h^t$ is the history term, where $h^t = \left\{ s_t, q_t, j_t, h^{t - 1} \right\}$.
 The after-migration value function is defined as follows:
 
 $$
@@ -141,17 +145,494 @@ $$
 3. Before-migration constraints (for the following period):
 
 $$
-  U_r(s, q, j, h^{t - 1}; z) \ge \Omega^1(r; z) \quad \forall r, s, q, j
+  U_r(h^t; z) \ge \Omega^1(r; z) \quad \forall r, s, q, j
 $$
 $$
-  V_r(U_r(s, q, j, h^{t - 1}; z); z)  \ge \Omega^2(r; z) \quad \forall r, s, q, j
+  V_r(U_r(h^t; z); z)  \ge \Omega^2(r; z) \quad \forall r, s, q, j
 $$
 
--->
+Based on these, construct a Lagrangian:
 
+$$
+  \tilde{V}_{sj}(U_s(h^{t - 1}; z); z) = E_q \left[ u(\tilde{y}^2(s, q, j; z) + \tau(s, q, j, h^{t - 1}; z)) - \mathcal{I}^2(j) d(z) + \beta \sum_r \pi^s(r|s) V_r(U_r(h^t; z); z) \right] \\
+  + \lambda_j(s_t, h^{t - 1}) \left(E_q \left[ u(\tilde{y}^1(s, q, j; z) - \tau(s, q, j, h^{t - 1}; z)) - \mathcal{I}^1(j) d(z) + \beta \sum_r \pi^s(r|s) U_r(h^t; z) \right] - U_s(h^{t - 1}; z) \right) \\
+  + \pi^q(q) \alpha^1(s, q, j) \left( u(\tilde{y}^1(s, q, j; z) - \tau(s, q, j, h^{t - 1}; z)) - \mathcal{I}^1(j) d(z) + \beta \sum_r \pi^s(r|s) U_r(h^t; z) - \tilde{\Omega}^1 (s, q, j; z) \right) \\
+  + \pi^q(q) \alpha^2(s, q, j) \left( u(\tilde{y}^2(s, q, j; z) + \tau(s, q, j, h^{t - 1}; z)) - \mathcal{I}^2(j) d(z) + \beta \sum_r \pi^s(r|s) V_r(U_r(h^t; z); z) - \tilde{\Omega}^2 (s, q, j; z) \right) \\
+  + \beta \pi^s(r|s) \pi^q(q) \phi^1(r, s, q, j) \left( U_r(h^t; z) - \Omega^1(r; z) \right) \\
+  + \beta \pi^s(r|s) \pi^q(q) \phi^2(r, s, q, j) \left( V_r(U_r(h^t; z); z) - \Omega^2(r; z) \right)
+$$
+
+The first order conditions are 
+
+$$
+  \pi^q(q) \left[ u'(c^2(s, q, j, h^{t - 1}; z)) \right] - \lambda_j(s_t, h^{t - 1}) \pi^q(q) \left[ u'(c^1(s, q, j, h^{t - 1}; z)) \right] \\
+  - \pi^q(q) \alpha^1(s, q, j) u^1(c^1(s, q, j, h^{t - 1}; z)) \\
+  + \pi^q(q) \alpha^2(s, q, j) u^1(c^2(s, q, j, h^{t - 1}; z)) = 0 \\
+  \Rightarrow \frac{u'(c^2(s, q, j, h^{t - 1}; z))}{u'(c^1(s, q, j, h^{t - 1}; z))} = \frac{\lambda_j(s_t, h^{t - 1}) + \alpha^1(s, q, j)}{1 + \alpha^2(s, q, j)} \quad \forall q
+$$
+
+and 
+
+$$
+  \pi^q(q) \beta \pi^s(r|s) V'_r(U_r(h^t; z); z) + \lambda_j(s_t, h^{t - 1}) \pi^q(q) \beta \pi^s(r|s) \\
+  + \pi^q(q) \alpha^1(s, q, j) \beta \pi^s(r|s) + \pi^q(q) \alpha^2(s, q, j) \beta \pi^s(r|s) V'_r(U_r(h^t; z); z) \\
+  + \pi^q(q) \phi^1(r, s, q, j) \beta \pi^s(r|s) + \pi^q(q) \phi^2(r, s, q, j) \beta \pi^s(r|s) V'_r(U_r(h^t; z); z) = 0 \\
+  \Rightarrow V'_r(U_r(h^t; z); z) = - \frac{\lambda_j(s_t, h^{t - 1}) + \alpha_1(s, q, j) + \phi^1(r, s, q, j)}{1 + \alpha_2(s, q, j) + \phi^2(r, s, q, j)}.
+$$
+
+The envelope condition is
+
+$$
+  \tilde{V}'_{sj} (U_s(h^{t - 1}; z); z) = - \lambda_j(s_t, h^{t - 1}).
+$$
+
+Also, under the optimal migration decision, $V_s(U_s(h^{t - 1}; z); z) = \tilde{V}_{sj}(U_s(h^{t - 1}; z); z)$.
+Using these, we obtain $V'_r(U_r(h^t; z); z) = \frac{V'_s(U_s(h^{t - 1}; z); z) - \alpha^1(s, q, j) - \phi^1(r, s, q, j)}{1 + \alpha^2(s, q, j) + \phi^2(r, s, q, j)} \quad \forall r, s, q$.
+Let $\lambda(s_t, h^{t - 1})$ be $\lambda_j(s_t, h^{t - 1})$ under the optimal migration decision given $(s_t, h^{t - 1})$.
+Then, letting $\tilde{\lambda}(h^t) = \frac{\lambda(s_t, h^{t - 1}) + \alpha^1(s_t, q_t, j_t)}{1 + \alpha^1(s_t, q_t, j_t)}$, Morten finds that
+
+$$
+  \tilde{\lambda(h^t)} = \begin{cases}
+  \underline{\tilde{\lambda}}_{sqj} & \text{if } \lambda(s_t, h^{t - 1}) \le \underline{\tilde{\lambda}}_{sqj} \\
+  \lambda(s_t, h^{t - 1}) & \text{if } \lambda(s_t, h^{t - 1}) \in \left[ \underline{\tilde{\lambda}}_{sqj}, \overline{\tilde{\lambda}}_{sqj}  \right] \\
+  \overline{\tilde{\lambda}}_{sqj} & \text{if } \lambda(s_t, h^{t - 1}) \ge \overline{\tilde{\lambda}}_{sqj} 
+  \end{cases}
+$$
+
+and
+
+$$
+  \lambda(r_{t + 1}, h^t) = \begin{cases}
+  \underline{\lambda_{r}} & \text{if } \tilde{\lambda}(h^t) \le \underline{\lambda_{r}} \\
+  \tilde{\lambda}(h^t) & \text{if } \tilde{\lambda}(h^t) \in \left[ \underline{\lambda_{r}}, \overline{\lambda_{r}}  \right] \\
+  \overline{\lambda_{r}} & \text{if } \tilde{\lambda}(h^t) \ge \overline{\lambda_{r}} 
+  \end{cases}.
+$$
+
+Importantly, these intervals do not depend on the past history.
+
+# Model simulation
+
+## Model settings
+
+### Village income
 
 ```{r}
+# village income shocks and their transition probabilities of HH1
+vil_inc1 <- c(2/3, 4/3)
+vil_P1 <- matrix(rep(c(0.1, 0.9), 2), nrow = 2, byrow = TRUE)
+
+# village income shocks and their transition probabilities of HH2
+vil_inc2 <- c(2/3, 4/3)
+vil_P2 <- matrix(rep(c(0.1, 0.9), 2), nrow = 2, byrow = TRUE)
+
+# transition super-matrix of village income shocks
+vil_R <- kronecker(vil_P2, vil_P1)
+
+# number of states
+# (number of village income states for HH1 times
+# number of village income states for HH2)
+vil_S <- length(vil_inc1) * length(vil_inc2)
+
+# village income matrix
+# (col 1: HH1 village income, col 2: HH2 village income)
+vil_inc_mat <- as.matrix(expand.grid(vil_inc1, vil_inc2))
+
+# aggregate village income in each state
+vil_inc_ag <- rowSums(vil_inc_mat)
+
+```
+
+### Migration income
+
+```{r}
+# migration income shocks and their probabilities of HH1
+mig_inc1 <- c(2/3, 4/3)
+mig_P1 <- c(0.1, 0.9)
+
+# migration income shocks and their probabilities of HH2
+mig_inc2 <- c(4/3, 5/3)
+mig_P2 <- c(0.1, 0.9)
+
+# transition super-matrix of migration income shocks
+mig_R <- kronecker(mig_P2, mig_P1)
+
+# number of states
+# (number of migration income states for HH1 times
+# number of migration income states for HH2)
+mig_S <- length(mig_inc1) * length(mig_inc2)
+
+# migration income matrix
+# (col 1: HH1 migration income, col 2: HH2 migration income)
+mig_inc_mat <- as.matrix(expand.grid(mig_inc1, mig_inc2))
+
+# aggregate migration income in each state
+mig_inc_ag <- rowSums(mig_inc_mat)
+
+# migration decision matrix
+mig_dec_mat <- as.matrix(expand.grid(c(0, 1), c(0, 1)))
+
+```
+
+The utility function takes the CRRA form:
+
+$$
+  u(c_{it}) = \frac{c_{it}^{1 - \sigma} - 1}{1 - \sigma}.
+$$
+
+```{r}
+# Define utility function
+util <- function(c, sigma) {
+  if (sigma != 1) {
+    output = (c ^ (1 - sigma) - 1) / (1 - sigma)
+  } else if (sigma == 1) {
+    output = log(c)
+  }
+  return(output)
+}
+
+util_prime <- function(c, sigma) c ^ (- sigma)
+
+```
+
+The paramters are set as follows:
+
+```{r}
+beta <- 0.95 # time discount factor 
+sig <- 1.5 # coefficient of relative risk aversion of HH1 and HH2
+d <- 0.8 # migration cost
+```
+
+Here, what is slightly different from the original model in Morten (2019) is that the after-migration income $(\tilde{y}^i(s_t, q_t, j_t; z))$ is the simple sum of migration income and village income, rather than the weighted average of them.
+So, in my model here, after earning income in village, some households send members to the urban to earn money, and the households that do not send migrants earn nothing while the slack season.
+
+## Grid of relative Pareto weights and consumption on the grid points
+
+Here, I make the grid of relative Pareto weight at the beginning of each period, $\lambda$, on which I compute HH1 consumption.
+The number of grid points is 200.
+
+```{r}
+# (Number of grid points on relative Pareto weight) - 1
+g <- 199
+
+# The grid points of relative Pareto weights
+qmin <- util_prime(max(vil_inc2), sig) / util_prime(min(vil_inc1), sig)
+qmax <- util_prime(min(vil_inc2), sig) / util_prime(max(vil_inc1), sig)
+q <- exp(seq(log(qmin), log(qmax), length.out = (g + 1)))
+```
+
+Then, I compute consumptions of the household 1 on these grid points.
+From the optimality condition and the CRRA utility functions, we obtain
+
+$$
+  c^1(s, q, j, \lambda; z) = \frac{\tilde{y}^1(s, q, j; z) + \tilde{y}^2(s, q, j; z)}{1 + \lambda^{- 1 / \sigma}}.
+$$
+```{r}
+# The grid points of consumption of HH 1
+# Consumption is determined by aggregate income (vil_inc_ag) and
+# relative Pareto weights (q)
+cons1 <- matrix(nrow = vil_S, ncol = (g + 1))
+for (k in 1:vil_S) {
+  for (l in 1:(g + 1)) {
+    cons1[k, l] <- vil_inc_ag[k] / (1 + q[l]^(- 1 / sig))
+  }
+}
+
+```
+
+## First-best risk sharing without migration
+
+To obtain the value functions under first-best risk sharing without migration, given Pareto weights, I use the following recursive equation:
+
+$$
+  V^i_{fb}(s, \lambda) = u \left( c_{it}(s, \lambda) \right) + \beta E[V^i_{fb}(s', \lambda)].
+$$
+
+```{r}
+V_full_func <- function(
+  vil_inc1, vil_P1, vil_inc2, vil_P2, g,
+  vil_R, vil_S, vil_inc_ag, qmin, qmax, q,
+  beta, sig,
+  util, util_prime, cons1
+  ) {
+
+  # Value function iterations ================
+  # Initial guess is the utility under equal allocation
+  V1 <- util(cons1, sig)
+  V2 <- util(vil_inc_ag - cons1, sig)
+  V1_new <- matrix(nrow = vil_S, ncol = (g + 1))
+  V2_new <- matrix(nrow = vil_S, ncol = (g + 1))
+
+  # Obtain value functions by value function iterations
+  j <- 1
+  diff <- 1
+  while (diff > 1e-8 & j < 500) {
+    V1_new <- util(cons1, sig) + beta * vil_R %*% V1
+    V2_new <- util(vil_inc_ag - cons1, sig) + beta * vil_R %*% V2
+    diff <- max(max(abs(V1_new - V1)), max(abs(V2_new - V2)))
+    V1 <- V1_new
+    V2 <- V2_new
+    j <- j + 1
+  }
+
+  return(list(V1, V2))
+}
+
+V_full <- V_full_func(
+  vil_inc1, vil_P1, vil_inc2, vil_P2, g,
+  vil_R, vil_S, vil_inc_ag, qmin, qmax, q,
+  beta, sig,
+  util, util_prime, cons1
+)
+
+V1_full <- V_full[[1]]
+V2_full <- V_full[[2]]
+
+```
+
+## First-best risk sharing with migration
+
+To obtain the value functions under first-best risk sharing without migration, assuming the equal Pareto weights, I use the following recursive equation:
+
+$$
+  V^i_{fb, mig}(s, \lambda) = E_q \left[ u \left( c_{it}(s, q, j(s, \lambda), \lambda) \right) - \mathcal{I}^i(j(s, \lambda)) d(z) + \beta E[V^i_{fb, mig}(s', \lambda)] \right],
+$$
+
+where $j(s, \lambda)$ is determined such that 
+
+$$
+  j(s, \lambda) = \arg \max_j \sum_i E_q \left[ u \left( c_{it}(s, q, j(s, \lambda), \lambda) \right) - \mathcal{I}^i(j(s, \lambda)) d(z) + \beta E[V^i_{fb, mig}(s', \lambda)] \right].
+$$
+
+Since the future value function does not depend on the current migration decision, this becomes
+
+$$
+  j(s, \lambda) = \arg \max_j \sum_i E_q \left[ u \left( c_{it}(s, q, j(s, \lambda), \lambda) \right) - \mathcal{I}^i(j(s, \lambda)) d(z) \right].
+$$
+
+Also, since $q$ and $s'$ are independent, the value function becomes
+
+$$
+  V^i_{fb, mig}(s, \lambda) = E_q \left[ u \left( c_{it}(s, q, j(s, \lambda), \lambda) \right) - \mathcal{I}^i(j(s, \lambda)) d(z) \right] + \beta E[V^i_{fb, mig}(s', \lambda)].
+$$
+
+```{r}
+
+V_full_mig_func <- function(
+  vil_inc1, vil_P1, vil_inc2, vil_P2, 
+  vil_R, vil_S, vil_inc_ag, 
+  mig_inc1, mig_P1, mig_inc2, mig_P2, 
+  mig_R, mig_S, mig_inc_ag, mig_dec_mat,
+  g, qmin, qmax, q,
+  beta, sig,
+  util, util_prime
+  ) {
+
+  # Value function iterations ================
+  # Initial guess is the utility under equal allocation
+  V1 <- util(cons1, sig)
+  V2 <- util(vil_inc_ag - cons1, sig)
+  V1_new <- matrix(nrow = vil_S, ncol = (g + 1))
+  V2_new <- matrix(nrow = vil_S, ncol = (g + 1))
+  
+  total_util_mat <- array(NA, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
+  util1_mat <- array(NA, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
+  util2_mat <- array(NA, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
+  for (j in 1:nrow(mig_dec_mat)) {
+    exp_inc <- mig_dec_mat[j, 1] * (
+      matrix(vil_inc_mat[,1], nrow = vil_S, ncol = mig_S) +
+          matrix(mig_inc_mat[,1], nrow = vil_S, ncol = mig_S, byrow = TRUE)
+    ) %*% mig_R +
+    (1 - mig_dec_mat[j, 1]) * vil_inc_mat[,1] +
+    mig_dec_mat[j, 2] * (
+      matrix(vil_inc_mat[,2], nrow = vil_S, ncol = mig_S) +
+          matrix(mig_inc_mat[,2], nrow = vil_S, ncol = mig_S, byrow = TRUE)
+    ) %*% mig_R +
+    (1 - mig_dec_mat[j, 2]) * vil_inc_mat[,2]
+    
+    cons1_fb_mig <- matrix(nrow = vil_S, ncol = (g + 1))
+    for (l in 1:(g + 1)) {
+      cons1_fb_mig[,l] <- exp_inc / (1 + q[l]^(- 1 / sig))
+    }
+    
+    total_util_mat[,,j] <- util(cons1_fb_mig, sig) + 
+      util(matrix(exp_inc, nrow = vil_S, ncol = (g + 1)) - cons1_fb_mig, sig) - 
+      sum(mig_dec_mat[j,]) * d
+    
+    util1_mat[,,j] <- util(cons1_fb_mig, sig) 
+    util2_mat[,,j] <- util(matrix(exp_inc, nrow = vil_S, ncol = (g + 1)) - cons1_fb_mig, sig) 
+  }
+  mig_dec <- apply(total_util_mat, c(1, 2), which.max)
+  
+  max_util1_mat <- matrix(nrow = vil_S, ncol = (g + 1))
+  max_util2_mat <- matrix(nrow = vil_S, ncol = (g + 1))
+  argmax_mig_dec_array <- array(NA, dim = c(vil_S, (g + 1), 2))
+  for (i in 1:vil_S) {
+    for (l in 1:(g + 1)) {
+      max_util1_mat[i, l] <- util1_mat[i, l, mig_dec[i, l]]
+      max_util2_mat[i, l] <- util2_mat[i, l, mig_dec[i, l]]
+      argmax_mig_dec_array[i, l, ] <- mig_dec_mat[mig_dec[i, l], ]
+    }
+  }
+  
+  print(table(mig_dec))
+  print(mig_dec[,1])
+  
+  # Obtain value functions by value function iterations
+  j <- 1
+  diff <- 1
+  while (diff > 1e-8 & j < 500) {
+    V1_new <- max_util1_mat - argmax_mig_dec_array[,,1] * d + beta * vil_R %*% V1
+    V2_new <- max_util2_mat - argmax_mig_dec_array[,,2] * d + beta * vil_R %*% V2
+    # V1_new <- max_util1_mat - apply(argmax_mig_dec_array, c(1, 2), sum) / 2 * d + beta * vil_R %*% V1
+    # V2_new <- max_util2_mat - apply(argmax_mig_dec_array, c(1, 2), sum) / 2 * d + beta * vil_R %*% V2
+    diff <- max(max(abs(V1_new - V1)), max(abs(V2_new - V2)))
+    V1 <- V1_new
+    V2 <- V2_new
+    j <- j + 1
+  }
+  
+  return(list(V1, V2))
+}
+
+V_full_mig <- V_full_mig_func(
+  vil_inc1, vil_P1, vil_inc2, vil_P2, 
+  vil_R, vil_S, vil_inc_ag, 
+  mig_inc1, mig_P1, mig_inc2, mig_P2, 
+  mig_R, mig_S, mig_inc_ag, mig_dec_mat,
+  g, qmin, qmax, q,
+  beta, sig,
+  util, util_prime
+)
+
+V1_full_mig <- V_full_mig[[1]]
+V2_full_mig <- V_full_mig[[2]]
 
 
 
 ```
+
+
+
+## Before-migration value of autarky
+
+```{r}
+
+Omega_before_mig_func <- function(
+  vil_inc1, vil_P1, vil_inc2, vil_P2, vil_R, vil_inc_mat, vil_S,
+  mig_inc1, mig_P1, mig_inc2, mig_P2, mig_R, mig_inc_mat, mig_S,
+  beta, sig, d,
+  util, util_prime
+  ) {
+  
+  # Expected utility under autarky for HH1
+  Omega1_before_mig <- numeric(length = vil_S)
+  i <- 1
+  diff <- 1
+  while (diff > 1e-12) {
+    expected_mig_inc <- util(
+      matrix(vil_inc_mat[,1], nrow = vil_S, ncol = mig_S) + 
+        matrix(mig_inc_mat[,1], nrow = vil_S, ncol = mig_S, byrow = TRUE), 
+      sig
+      ) %*% mig_R - d
+    Omega1_before_mig_new <- pmax(util(vil_inc_mat[,1], sig), expected_mig_inc) + beta * vil_R %*% Omega1_before_mig
+    diff <- max(abs(Omega1_before_mig_new - Omega1_before_mig))
+    Omega1_before_mig <- Omega1_before_mig_new
+    i <- i + 1
+  }
+
+  # Expected utility under autarky for HH2
+  Omega2_before_mig <- numeric(length = vil_S)
+  i <- 1
+  diff <- 1
+  while (diff > 1e-12) {
+    expected_mig_inc <- util(
+      matrix(vil_inc_mat[,2], nrow = vil_S, ncol = mig_S) + 
+        matrix(mig_inc_mat[,2], nrow = vil_S, ncol = mig_S, byrow = TRUE), 
+      sig
+      ) %*% mig_R - d
+    Omega2_before_mig_new <- pmax(util(vil_inc_mat[,2], sig), expected_mig_inc) + beta * vil_R %*% Omega2_before_mig
+    diff <- max(abs(Omega2_before_mig_new - Omega2_before_mig))
+    Omega2_before_mig <- Omega2_before_mig_new
+    i <- i + 1
+  }
+
+  return(cbind(Omega1_before_mig, Omega2_before_mig))
+}
+
+Omega_before_mig <- Omega_before_mig_func(
+  vil_inc1, vil_P1, vil_inc2, vil_P2, vil_R, vil_inc_mat, vil_S,
+  mig_inc1, mig_P1, mig_inc2, mig_P2, mig_R, mig_inc_mat, mig_S,
+  beta, sig, d,
+  util, util_prime
+  )
+
+```
+
+## After-migration value of autarky
+
+```{r}
+
+Omega_after_mig_func <- function(
+  vil_inc1, vil_P1, vil_inc2, vil_P2, vil_R, vil_inc_mat, vil_S,
+  mig_inc1, mig_P1, mig_inc2, mig_P2, mig_R, mig_inc_mat, mig_S, mig_dec_mat,
+  beta, sig, d,
+  util, util_prime, Omega_before_mig
+  ) {
+  
+  # Expected utility under autarky for HH1
+  Omega1_after_mig <- array(0, dim = c(vil_S, mig_S, nrow(mig_dec_mat)))
+  Omega1_after_mig_new <- array(0, dim = c(vil_S, mig_S, nrow(mig_dec_mat)))
+  i <- 1
+  diff <- 1
+  while (diff > 1e-12) {
+    mig_inc <- util(
+      matrix(vil_inc_mat[,1], nrow = vil_S, ncol = mig_S) + 
+        matrix(mig_inc_mat[,1], nrow = vil_S, ncol = mig_S, byrow = TRUE), 
+      sig
+      ) - d
+    for (i in seq(nrow(mig_dec_mat))) {
+      Omega1_after_mig_new[,,i] <- mig_dec_mat[i, 1] * mig_inc + (1 - mig_dec_mat[i, 1]) * matrix(util(vil_inc_mat[,1], sig), nrow = vil_S, ncol = mig_S)+ matrix(beta * vil_R %*% Omega_before_mig[,1], nrow = vil_S, ncol = mig_S)
+    }
+    
+    diff <- max(abs(Omega1_after_mig_new - Omega1_after_mig))
+    Omega1_after_mig <- Omega1_after_mig_new
+    i <- i + 1
+  }
+
+  # Expected utility under autarky for HH2
+  Omega2_after_mig <- array(0, dim = c(vil_S, mig_S, nrow(mig_dec_mat)))
+  Omega2_after_mig_new <- array(0, dim = c(vil_S, mig_S, nrow(mig_dec_mat)))
+  i <- 1
+  diff <- 1
+  while (diff > 1e-12) {
+    mig_inc <- util(
+      matrix(vil_inc_mat[,2], nrow = vil_S, ncol = mig_S) + 
+        matrix(mig_inc_mat[,2], nrow = vil_S, ncol = mig_S, byrow = TRUE), 
+      sig
+      ) - d
+    for (i in seq(nrow(mig_dec_mat))) {
+      Omega2_after_mig_new[,,i] <- mig_dec_mat[i, 2] * mig_inc + (1 - mig_dec_mat[i, 2]) * matrix(util(vil_inc_mat[,2], sig), nrow = vil_S, ncol = mig_S)+ matrix(beta * vil_R %*% Omega_before_mig[,2], nrow = vil_S, ncol = mig_S)
+    }
+    
+    diff <- max(abs(Omega2_after_mig_new - Omega2_after_mig))
+    Omega2_after_mig <- Omega2_after_mig_new
+    i <- i + 1
+  }
+
+  return(list(Omega1_after_mig, Omega2_after_mig))
+}
+
+Omega_after_mig <- Omega_after_mig_func(
+  vil_inc1, vil_P1, vil_inc2, vil_P2, vil_R, vil_inc_mat, vil_S,
+  mig_inc1, mig_P1, mig_inc2, mig_P2, mig_R, mig_inc_mat, mig_S, mig_dec_mat,
+  beta, sig, d,
+  util, util_prime, Omega_before_mig
+  )
+
+```
+
+
+
+
+
