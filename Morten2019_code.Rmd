@@ -435,32 +435,36 @@ V_full_mig_func <- function(
   V1_new <- matrix(nrow = vil_S, ncol = (g + 1))
   V2_new <- matrix(nrow = vil_S, ncol = (g + 1))
   
-  total_util_mat <- array(NA, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
-  util1_mat <- array(NA, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
-  util2_mat <- array(NA, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
+  total_util_mat <- array(0, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
+  util1_mat <- array(0, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
+  util2_mat <- array(0, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
   for (j in 1:nrow(mig_dec_mat)) {
-    exp_inc <- mig_dec_mat[j, 1] * (
+    total_inc <- mig_dec_mat[j, 1] * (
       matrix(vil_inc_mat[,1], nrow = vil_S, ncol = mig_S) +
           matrix(mig_inc_mat[,1], nrow = vil_S, ncol = mig_S, byrow = TRUE)
-    ) %*% mig_R +
-    (1 - mig_dec_mat[j, 1]) * vil_inc_mat[,1] +
+    ) +
+    (1 - mig_dec_mat[j, 1]) * matrix(vil_inc_mat[,1], nrow = vil_S, ncol = mig_S) +
     mig_dec_mat[j, 2] * (
       matrix(vil_inc_mat[,2], nrow = vil_S, ncol = mig_S) +
           matrix(mig_inc_mat[,2], nrow = vil_S, ncol = mig_S, byrow = TRUE)
-    ) %*% mig_R +
-    (1 - mig_dec_mat[j, 2]) * vil_inc_mat[,2]
+    ) +
+    (1 - mig_dec_mat[j, 2]) * matrix(vil_inc_mat[,2], nrow = vil_S, ncol = mig_S)
     
-    cons1_fb_mig <- matrix(nrow = vil_S, ncol = (g + 1))
+    cons1_fb_mig <- array(NA, dim = c(vil_S, mig_S, (g + 1)))
+    cons2_fb_mig <- array(NA, dim = c(vil_S, mig_S, (g + 1)))
     for (l in 1:(g + 1)) {
-      cons1_fb_mig[,l] <- exp_inc / (1 + q[l]^(- 1 / sig))
+      cons1_fb_mig[,,l] <- total_inc / (1 + q[l]^(- 1 / sig))
+      cons2_fb_mig[,,l] <- total_inc - cons1_fb_mig[,,l]
     }
     
-    total_util_mat[,,j] <- util(cons1_fb_mig, sig) + 
-      util(matrix(exp_inc, nrow = vil_S, ncol = (g + 1)) - cons1_fb_mig, sig) - 
-      sum(mig_dec_mat[j,]) * d
-    
-    util1_mat[,,j] <- util(cons1_fb_mig, sig) 
-    util2_mat[,,j] <- util(matrix(exp_inc, nrow = vil_S, ncol = (g + 1)) - cons1_fb_mig, sig) 
+    for (k in 1:mig_S) {
+      total_util_mat[,,j] <- (util(cons1_fb_mig[,k,], sig) + util(cons2_fb_mig[,k,], sig)) * mig_R[k]
+      util1_mat[,,j] <- util(cons1_fb_mig[,k,], sig) * mig_R[k]
+      util2_mat[,,j] <- util(cons2_fb_mig[,k,], sig) * mig_R[k]
+    }
+    total_util_mat[,,j] <- total_util_mat[,,j] - sum(mig_dec_mat[j,]) * d
+    util1_mat[,,j] <- util1_mat[,,j] - sum(mig_dec_mat[j,1]) * d
+    util2_mat[,,j] <- util2_mat[,,j] - sum(mig_dec_mat[j,2]) * d
   }
   mig_dec <- apply(total_util_mat, c(1, 2), which.max)
   
@@ -475,24 +479,22 @@ V_full_mig_func <- function(
     }
   }
   
-  print(table(mig_dec))
-  print(mig_dec[,1])
+  # print(table(mig_dec))
+  # print(mig_dec[,1])
   
   # Obtain value functions by value function iterations
   j <- 1
   diff <- 1
   while (diff > 1e-8 & j < 500) {
-    V1_new <- max_util1_mat - argmax_mig_dec_array[,,1] * d + beta * vil_R %*% V1
-    V2_new <- max_util2_mat - argmax_mig_dec_array[,,2] * d + beta * vil_R %*% V2
-    # V1_new <- max_util1_mat - apply(argmax_mig_dec_array, c(1, 2), sum) / 2 * d + beta * vil_R %*% V1
-    # V2_new <- max_util2_mat - apply(argmax_mig_dec_array, c(1, 2), sum) / 2 * d + beta * vil_R %*% V2
+    V1_new <- max_util1_mat + beta * vil_R %*% V1
+    V2_new <- max_util2_mat + beta * vil_R %*% V2
     diff <- max(max(abs(V1_new - V1)), max(abs(V2_new - V2)))
     V1 <- V1_new
     V2 <- V2_new
     j <- j + 1
   }
   
-  return(list(V1, V2))
+  return(list(V1, V2, mig_dec))
 }
 
 V_full_mig <- V_full_mig_func(
@@ -507,12 +509,9 @@ V_full_mig <- V_full_mig_func(
 
 V1_full_mig <- V_full_mig[[1]]
 V2_full_mig <- V_full_mig[[2]]
-
-
+mig_dec_full <- V_full_mig[[3]]
 
 ```
-
-
 
 ## Before-migration value of autarky
 
@@ -632,6 +631,45 @@ Omega_after_mig <- Omega_after_mig_func(
 
 ```
 
+## Risk-sharing with limited commitment and migration
+
+```{r}
+
+
+for (j in 1:nrow(mig_dec_mat)) {
+  # total resources, depending on s, q, and j
+  total_inc <- mig_dec_mat[j, 1] * (
+    matrix(vil_inc_mat[,1], nrow = vil_S, ncol = mig_S) +
+        matrix(mig_inc_mat[,1], nrow = vil_S, ncol = mig_S, byrow = TRUE)
+  ) +
+  (1 - mig_dec_mat[j, 1]) * matrix(vil_inc_mat[,1], nrow = vil_S, ncol = mig_S) +
+  mig_dec_mat[j, 2] * (
+    matrix(vil_inc_mat[,2], nrow = vil_S, ncol = mig_S) +
+        matrix(mig_inc_mat[,2], nrow = vil_S, ncol = mig_S, byrow = TRUE)
+  ) +
+  (1 - mig_dec_mat[j, 2]) * matrix(vil_inc_mat[,2], nrow = vil_S, ncol = mig_S)
+  
+  cons1_fb_mig <- array(NA, dim = c(vil_S, mig_S, (g + 1)))
+  cons2_fb_mig <- array(NA, dim = c(vil_S, mig_S, (g + 1)))
+  for (l in 1:(g + 1)) {
+    cons1_fb_mig[,,l] <- total_inc / (1 + q[l]^(- 1 / sig))
+    cons2_fb_mig[,,l] <- total_inc - cons1_fb_mig[,,l]
+  }
+  
+  for (k in 1:mig_S) {
+    total_util_mat[,,j] <- (util(cons1_fb_mig[,k,], sig) + util(cons2_fb_mig[,k,], sig)) * mig_R[k]
+    util1_mat[,,j] <- util(cons1_fb_mig[,k,], sig) * mig_R[k]
+    util2_mat[,,j] <- util(cons2_fb_mig[,k,], sig) * mig_R[k]
+  }
+  total_util_mat[,,j] <- total_util_mat[,,j] - sum(mig_dec_mat[j,]) * d
+  util1_mat[,,j] <- util1_mat[,,j] - sum(mig_dec_mat[j,1]) * d
+  util2_mat[,,j] <- util2_mat[,,j] - sum(mig_dec_mat[j,2]) * d
+}
+
+
+
+
+```
 
 
 
