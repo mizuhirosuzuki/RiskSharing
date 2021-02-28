@@ -496,7 +496,7 @@ V_lc_func <- function(
           if (x_high > q[q_ind_high]) {
             q_ind_high <- q_ind_high + 1
           }
-          x_lc[k, 1:q_ind_high] <- x_high
+          x_lc[k, q_ind_high:(g + 1)] <- x_high
           
           # Value functions of HH 2 under the relative Pareto weights x
           # (I use interpolation since x_high might not be on the grid q)

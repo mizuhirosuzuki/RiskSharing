@@ -274,6 +274,31 @@ mig_dec_mat <- as.matrix(expand.grid(c(0, 1), c(0, 1)))
 
 ```
 
+### Total income (village income + migration income)
+
+```{r}
+# total income (village income + migration income), depending on s, q, and j
+total_mig_inc1 <- array(NA, dim = c(vil_S, mig_S, nrow(mig_dec_mat)))
+total_mig_inc2 <- array(NA, dim = c(vil_S, mig_S, nrow(mig_dec_mat)))
+total_mig_inc <- array(NA, dim = c(vil_S, mig_S, nrow(mig_dec_mat)))
+for (j in 1:nrow(mig_dec_mat)) {
+    total_mig_inc1[,,j] <- mig_dec_mat[j, 1] * (
+      matrix(vil_inc_mat[,1], nrow = vil_S, ncol = mig_S) +
+          matrix(mig_inc_mat[,1], nrow = vil_S, ncol = mig_S, byrow = TRUE)
+    ) +
+    (1 - mig_dec_mat[j, 1]) * matrix(vil_inc_mat[,1], nrow = vil_S, ncol = mig_S)
+    
+    total_mig_inc2[,,j] <- mig_dec_mat[j, 2] * (
+      matrix(vil_inc_mat[,2], nrow = vil_S, ncol = mig_S) +
+          matrix(mig_inc_mat[,2], nrow = vil_S, ncol = mig_S, byrow = TRUE)
+    ) +
+    (1 - mig_dec_mat[j, 2]) * matrix(vil_inc_mat[,2], nrow = vil_S, ncol = mig_S)
+    
+    total_mig_inc[,,j] <- total_mig_inc1[,,j] + total_mig_inc2[,,j] 
+}
+
+```
+
 The utility function takes the CRRA form:
 
 $$
@@ -309,16 +334,16 @@ So, in my model here, after earning income in village, some households send memb
 ## Grid of relative Pareto weights and consumption on the grid points
 
 Here, I make the grid of relative Pareto weight at the beginning of each period, $\lambda$, on which I compute HH1 consumption.
-The number of grid points is 200.
+The number of grid points is 400.
 
 ```{r}
 # (Number of grid points on relative Pareto weight) - 1
-g <- 199
+g <- 399
 
-# The grid points of relative Pareto weights
-qmin <- util_prime(max(vil_inc2), sig) / util_prime(min(vil_inc1), sig)
-qmax <- util_prime(min(vil_inc2), sig) / util_prime(max(vil_inc1), sig)
-q <- exp(seq(log(qmin), log(qmax), length.out = (g + 1)))
+# The grid points of relative Pareto weights with migration
+lambda_min <- util_prime(max(total_mig_inc2), sig) / util_prime(min(total_mig_inc1), sig)
+lambda_max <- util_prime(min(total_mig_inc2), sig) / util_prime(max(total_mig_inc1), sig)
+lambda <- exp(seq(log(lambda_min), log(lambda_max), length.out = (g + 1)))
 ```
 
 Then, I compute consumptions of the household 1 on these grid points.
@@ -327,16 +352,32 @@ From the optimality condition and the CRRA utility functions, we obtain
 $$
   c^1(s, q, j, \lambda; z) = \frac{\tilde{y}^1(s, q, j; z) + \tilde{y}^2(s, q, j; z)}{1 + \lambda^{- 1 / \sigma}}.
 $$
+
 ```{r}
-# The grid points of consumption of HH 1
+# The grid points of consumption without migration:
 # Consumption is determined by aggregate income (vil_inc_ag) and
-# relative Pareto weights (q)
+# relative Pareto weights (lambda)
 cons1 <- matrix(nrow = vil_S, ncol = (g + 1))
+cons2 <- matrix(nrow = vil_S, ncol = (g + 1))
 for (k in 1:vil_S) {
   for (l in 1:(g + 1)) {
-    cons1[k, l] <- vil_inc_ag[k] / (1 + q[l]^(- 1 / sig))
+    cons1[k, l] <- vil_inc_ag[k] / (1 + lambda[l]^(- 1 / sig))
+    cons2[k, l] <- vil_inc_ag[k] - cons1[k, l]
   }
 }
+
+# The grid points of consumption with migration:
+# Consumption is determined by total income (total_mig_inc) and
+# relative Pareto weights (lambda)
+mig_cons1 <- array(NA, dim = c(vil_S, mig_S, nrow(mig_dec_mat), g + 1))
+mig_cons2 <- array(NA, dim = c(vil_S, mig_S, nrow(mig_dec_mat), g + 1))
+for (j in 1:nrow(mig_dec_mat)) {
+    for (l in 1:(g + 1)) {
+      mig_cons1[,,j,l] <- total_mig_inc[,,j] / (1 + lambda[l]^(- 1 / sig))
+      mig_cons2[,,j,l] <- total_mig_inc[,,j] - mig_cons1[,,j,l]
+    }
+}
+
 
 ```
 
@@ -351,15 +392,15 @@ $$
 ```{r}
 V_full_func <- function(
   vil_inc1, vil_P1, vil_inc2, vil_P2, g,
-  vil_R, vil_S, vil_inc_ag, qmin, qmax, q,
+  vil_R, vil_S, vil_inc_ag, lambda_min, lambda_max, lambda,
   beta, sig,
-  util, util_prime, cons1
+  util, util_prime, cons1, cons2
   ) {
 
   # Value function iterations ================
   # Initial guess is the utility under equal allocation
   V1 <- util(cons1, sig)
-  V2 <- util(vil_inc_ag - cons1, sig)
+  V2 <- util(cons2, sig)
   V1_new <- matrix(nrow = vil_S, ncol = (g + 1))
   V2_new <- matrix(nrow = vil_S, ncol = (g + 1))
 
@@ -368,7 +409,7 @@ V_full_func <- function(
   diff <- 1
   while (diff > 1e-8 & j < 500) {
     V1_new <- util(cons1, sig) + beta * vil_R %*% V1
-    V2_new <- util(vil_inc_ag - cons1, sig) + beta * vil_R %*% V2
+    V2_new <- util(cons2, sig) + beta * vil_R %*% V2
     diff <- max(max(abs(V1_new - V1)), max(abs(V2_new - V2)))
     V1 <- V1_new
     V2 <- V2_new
@@ -380,9 +421,9 @@ V_full_func <- function(
 
 V_full <- V_full_func(
   vil_inc1, vil_P1, vil_inc2, vil_P2, g,
-  vil_R, vil_S, vil_inc_ag, qmin, qmax, q,
+  vil_R, vil_S, vil_inc_ag, lambda_min, lambda_max, lambda,
   beta, sig,
-  util, util_prime, cons1
+  util, util_prime, cons1, cons2
 )
 
 V1_full <- V_full[[1]]
@@ -416,6 +457,7 @@ $$
   V^i_{fb, mig}(s, \lambda) = E_q \left[ u \left( c_{it}(s, q, j(s, \lambda), \lambda) \right) - \mathcal{I}^i(j(s, \lambda)) d(z) \right] + \beta E[V^i_{fb, mig}(s', \lambda)].
 $$
 
+
 ```{r}
 
 V_full_mig_func <- function(
@@ -423,15 +465,16 @@ V_full_mig_func <- function(
   vil_R, vil_S, vil_inc_ag, 
   mig_inc1, mig_P1, mig_inc2, mig_P2, 
   mig_R, mig_S, mig_inc_ag, mig_dec_mat,
-  g, qmin, qmax, q,
-  beta, sig,
+  g, lambda_min, lambda_max, lambda,
+  beta, sig, cons1, cons2,
+  total_mig_inc, mig_cons1, mig_cons2,
   util, util_prime
   ) {
 
   # Value function iterations ================
-  # Initial guess is the utility under equal allocation
+  # Initial guess is the instantaneous utility under full risk sharing
   V1 <- util(cons1, sig)
-  V2 <- util(vil_inc_ag - cons1, sig)
+  V2 <- util(cons2, sig)
   V1_new <- matrix(nrow = vil_S, ncol = (g + 1))
   V2_new <- matrix(nrow = vil_S, ncol = (g + 1))
   
@@ -439,28 +482,11 @@ V_full_mig_func <- function(
   util1_mat <- array(0, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
   util2_mat <- array(0, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
   for (j in 1:nrow(mig_dec_mat)) {
-    total_inc <- mig_dec_mat[j, 1] * (
-      matrix(vil_inc_mat[,1], nrow = vil_S, ncol = mig_S) +
-          matrix(mig_inc_mat[,1], nrow = vil_S, ncol = mig_S, byrow = TRUE)
-    ) +
-    (1 - mig_dec_mat[j, 1]) * matrix(vil_inc_mat[,1], nrow = vil_S, ncol = mig_S) +
-    mig_dec_mat[j, 2] * (
-      matrix(vil_inc_mat[,2], nrow = vil_S, ncol = mig_S) +
-          matrix(mig_inc_mat[,2], nrow = vil_S, ncol = mig_S, byrow = TRUE)
-    ) +
-    (1 - mig_dec_mat[j, 2]) * matrix(vil_inc_mat[,2], nrow = vil_S, ncol = mig_S)
-    
-    cons1_fb_mig <- array(NA, dim = c(vil_S, mig_S, (g + 1)))
-    cons2_fb_mig <- array(NA, dim = c(vil_S, mig_S, (g + 1)))
-    for (l in 1:(g + 1)) {
-      cons1_fb_mig[,,l] <- total_inc / (1 + q[l]^(- 1 / sig))
-      cons2_fb_mig[,,l] <- total_inc - cons1_fb_mig[,,l]
-    }
     
     for (k in 1:mig_S) {
-      total_util_mat[,,j] <- (util(cons1_fb_mig[,k,], sig) + util(cons2_fb_mig[,k,], sig)) * mig_R[k]
-      util1_mat[,,j] <- util(cons1_fb_mig[,k,], sig) * mig_R[k]
-      util2_mat[,,j] <- util(cons2_fb_mig[,k,], sig) * mig_R[k]
+      total_util_mat[,,j] <- (util(mig_cons1[,k,j,], sig) + util(mig_cons2[,k,j,], sig)) * mig_R[k]
+      util1_mat[,,j] <- util(mig_cons1[,k,j,], sig) * mig_R[k]
+      util2_mat[,,j] <- util(mig_cons2[,k,j,], sig) * mig_R[k]
     }
     total_util_mat[,,j] <- total_util_mat[,,j] - sum(mig_dec_mat[j,]) * d
     util1_mat[,,j] <- util1_mat[,,j] - sum(mig_dec_mat[j,1]) * d
@@ -471,16 +497,13 @@ V_full_mig_func <- function(
   max_util1_mat <- matrix(nrow = vil_S, ncol = (g + 1))
   max_util2_mat <- matrix(nrow = vil_S, ncol = (g + 1))
   argmax_mig_dec_array <- array(NA, dim = c(vil_S, (g + 1), 2))
-  for (i in 1:vil_S) {
+  for (s in 1:vil_S) {
     for (l in 1:(g + 1)) {
-      max_util1_mat[i, l] <- util1_mat[i, l, mig_dec[i, l]]
-      max_util2_mat[i, l] <- util2_mat[i, l, mig_dec[i, l]]
-      argmax_mig_dec_array[i, l, ] <- mig_dec_mat[mig_dec[i, l], ]
+      max_util1_mat[s, l] <- util1_mat[s, l, mig_dec[s, l]]
+      max_util2_mat[s, l] <- util2_mat[s, l, mig_dec[s, l]]
+      argmax_mig_dec_array[s, l, ] <- mig_dec_mat[mig_dec[s, l], ]
     }
   }
-  
-  # print(table(mig_dec))
-  # print(mig_dec[,1])
   
   # Obtain value functions by value function iterations
   j <- 1
@@ -502,8 +525,9 @@ V_full_mig <- V_full_mig_func(
   vil_R, vil_S, vil_inc_ag, 
   mig_inc1, mig_P1, mig_inc2, mig_P2, 
   mig_R, mig_S, mig_inc_ag, mig_dec_mat,
-  g, qmin, qmax, q,
-  beta, sig,
+  g, lambda_min, lambda_max, lambda,
+  beta, sig, cons1, cons2,
+  total_mig_inc, mig_cons1, mig_cons2,
   util, util_prime
 )
 
@@ -566,6 +590,9 @@ Omega_before_mig <- Omega_before_mig_func(
   util, util_prime
   )
 
+Omega1_before_mig <- Omega_before_mig[,1]
+Omega2_before_mig <- Omega_before_mig[,2]
+
 ```
 
 ## After-migration value of autarky
@@ -590,8 +617,10 @@ Omega_after_mig_func <- function(
         matrix(mig_inc_mat[,1], nrow = vil_S, ncol = mig_S, byrow = TRUE), 
       sig
       ) - d
-    for (i in seq(nrow(mig_dec_mat))) {
-      Omega1_after_mig_new[,,i] <- mig_dec_mat[i, 1] * mig_inc + (1 - mig_dec_mat[i, 1]) * matrix(util(vil_inc_mat[,1], sig), nrow = vil_S, ncol = mig_S)+ matrix(beta * vil_R %*% Omega_before_mig[,1], nrow = vil_S, ncol = mig_S)
+    for (j in seq(nrow(mig_dec_mat))) {
+      Omega1_after_mig_new[,,j] <- mig_dec_mat[j, 1] * mig_inc + 
+        (1 - mig_dec_mat[j, 1]) * matrix(util(vil_inc_mat[,1], sig), nrow = vil_S, ncol = mig_S) + 
+        matrix(beta * vil_R %*% Omega_before_mig[,1], nrow = vil_S, ncol = mig_S)
     }
     
     diff <- max(abs(Omega1_after_mig_new - Omega1_after_mig))
@@ -610,8 +639,10 @@ Omega_after_mig_func <- function(
         matrix(mig_inc_mat[,2], nrow = vil_S, ncol = mig_S, byrow = TRUE), 
       sig
       ) - d
-    for (i in seq(nrow(mig_dec_mat))) {
-      Omega2_after_mig_new[,,i] <- mig_dec_mat[i, 2] * mig_inc + (1 - mig_dec_mat[i, 2]) * matrix(util(vil_inc_mat[,2], sig), nrow = vil_S, ncol = mig_S)+ matrix(beta * vil_R %*% Omega_before_mig[,2], nrow = vil_S, ncol = mig_S)
+    for (j in seq(nrow(mig_dec_mat))) {
+      Omega2_after_mig_new[,,j] <- mig_dec_mat[j, 2] * mig_inc + 
+        (1 - mig_dec_mat[j, 2]) * matrix(util(vil_inc_mat[,2], sig), nrow = vil_S, ncol = mig_S) + 
+        matrix(beta * vil_R %*% Omega_before_mig[,2], nrow = vil_S, ncol = mig_S)
     }
     
     diff <- max(abs(Omega2_after_mig_new - Omega2_after_mig))
@@ -629,45 +660,388 @@ Omega_after_mig <- Omega_after_mig_func(
   util, util_prime, Omega_before_mig
   )
 
+Omega1_after_mig <- Omega_after_mig[[1]]
+Omega2_after_mig <- Omega_after_mig[[2]]
+
 ```
 
 ## Risk-sharing with limited commitment and migration
 
 ```{r}
 
+cons1_lc <- array(NA, dim = c(vil_S, mig_S, nrow(mig_dec_mat), (g + 1)))
+cons2_lc <- array(NA, dim = c(vil_S, mig_S, nrow(mig_dec_mat), (g + 1)))
+V1_after_mig <- array(NA, dim = c(vil_S, mig_S, nrow(mig_dec_mat), (g + 1)))
+V2_after_mig <- array(NA, dim = c(vil_S, mig_S, nrow(mig_dec_mat), (g + 1)))
 
-for (j in 1:nrow(mig_dec_mat)) {
-  # total resources, depending on s, q, and j
-  total_inc <- mig_dec_mat[j, 1] * (
-    matrix(vil_inc_mat[,1], nrow = vil_S, ncol = mig_S) +
-        matrix(mig_inc_mat[,1], nrow = vil_S, ncol = mig_S, byrow = TRUE)
-  ) +
-  (1 - mig_dec_mat[j, 1]) * matrix(vil_inc_mat[,1], nrow = vil_S, ncol = mig_S) +
-  mig_dec_mat[j, 2] * (
-    matrix(vil_inc_mat[,2], nrow = vil_S, ncol = mig_S) +
-        matrix(mig_inc_mat[,2], nrow = vil_S, ncol = mig_S, byrow = TRUE)
-  ) +
-  (1 - mig_dec_mat[j, 2]) * matrix(vil_inc_mat[,2], nrow = vil_S, ncol = mig_S)
+after_mig_lambda_int <- array(NA, dim = c(vil_S, mig_S, nrow(mig_dec_mat), 2))
+after_mig_lambda <- array(NA, dim = c(vil_S, mig_S, nrow(mig_dec_mat), (g + 1)))
+
+before_mig_lambda_int <- array(NA, dim = c(vil_S, 2))
+before_mig_lambda <- array(NA, dim = c(vil_S, (g + 1)))
+
+V_before_mig_update_func <- function(
+  V1_before_mig, V2_before_mig,
+  vil_inc1, vil_P1, vil_inc2, vil_P2, vil_R, vil_inc_mat, vil_S,
+  mig_inc1, mig_P1, mig_inc2, mig_P2, mig_R, mig_inc_mat, mig_S, mig_dec_mat,
+  beta, sig, d,
+  util, util_prime, Omega_before_mig,
+  con1_lc, con2_lc, V1_after_mig, V2_after_mig,
+  after_mig_lambda_int, after_mig_lambda, before_mig_lambda_int, before_mig_lambda,
+  kappa = 1e-1
+) {
   
-  cons1_fb_mig <- array(NA, dim = c(vil_S, mig_S, (g + 1)))
-  cons2_fb_mig <- array(NA, dim = c(vil_S, mig_S, (g + 1)))
-  for (l in 1:(g + 1)) {
-    cons1_fb_mig[,,l] <- total_inc / (1 + q[l]^(- 1 / sig))
-    cons2_fb_mig[,,l] <- total_inc - cons1_fb_mig[,,l]
+  # Value functions after migration at grid point (s, q, j, lambda) =================
+  for (q in 1:mig_S) {
+    for (j in 1:nrow(mig_dec_mat)) {
+      V1_after_mig[,q,j,] <- util(mig_cons1, sig)[,q,j,] - 
+        mig_dec_mat[j, 1] * d + beta * vil_R %*% V1_before_mig
+      V2_after_mig[,q,j,] <- util(mig_cons2, sig)[,q,j,] - 
+        mig_dec_mat[j, 2] * d + beta * vil_R %*% V2_before_mig
+    }
   }
   
-  for (k in 1:mig_S) {
-    total_util_mat[,,j] <- (util(cons1_fb_mig[,k,], sig) + util(cons2_fb_mig[,k,], sig)) * mig_R[k]
-    util1_mat[,,j] <- util(cons1_fb_mig[,k,], sig) * mig_R[k]
-    util2_mat[,,j] <- util(cons2_fb_mig[,k,], sig) * mig_R[k]
+  # find the after-migration intervals
+  for (s in 1:vil_S) {
+    for (q in 1:mig_S) {
+      for (j in 1:nrow(mig_dec_mat)) {
+        
+        # Function to calculate the difference between 
+        # the after-migration value when the relative Pareto weight is x
+        # and the after-migration autarky value for HH1
+        calc_diff_val_aut_1 <- function(x) {
+          # Calculate consumption of HH 1 at a relative Pareto weight x
+          cons_x <- total_mig_inc[s, q, j] / (1 + x^(- 1 / sig))
+          
+          # Value functions of HH 1 under the relative Pareto weights x
+          # (I use interpolation since x might not be on the grid lambda)
+          V1_x <- apply(V1_before_mig, 1, function(y) approxfun(lambda, y, rule = 2)(x))
+          
+          # difference between after-migration value function under x and 
+          # after-migration autarky value
+          diff <- util(cons_x, sig) - mig_dec_mat[j, 1] * d + beta * vil_R[s,] %*% V1_x - Omega1_after_mig[s, q, j]
+          return(diff)
+        }
+        
+        # Function to calculate the difference between 
+        # the after-migration value when the relative Pareto weight is x
+        # and the after-migration autarky value for HH2
+        calc_diff_val_aut_2 <- function(x) {
+          # Calculate consumption of HH 1 at a relative Pareto weight x
+          cons_x <- total_mig_inc[s, q, j] - total_mig_inc[s, q, j] / (1 + x^(- 1 / sig))
+          
+          # Value functions of HH 2 under the relative Pareto weights x
+          # (I use interpolation since x might not be on the grid lambda)
+          V2_x <- apply(V2_before_mig, 1, function(y) approxfun(lambda, y, rule = 2)(x))
+          
+          # difference between after-migration value function under x and 
+          # after-migration autarky value
+          diff <- util(cons_x, sig) - mig_dec_mat[j, 2] * d + beta * vil_R[s,] %*% V2_x - Omega2_after_mig[s, q, j]
+          return(diff)
+        }
+        
+        # If the relative Pareto weight is too low and violates the PC, then
+        # set the relative Pareto weight to the lower bound of the interval, and
+        # HH1 gets the value under autarky.
+        if (
+          (calc_diff_val_aut_1(lambda_max) > 0) && 
+          (calc_diff_val_aut_1(lambda_min) < 0)
+          ) {
+          
+          x_low <- uniroot(
+            calc_diff_val_aut_1, c(lambda_min, lambda_max), 
+            tol = 1e-10, maxiter = 1000
+            )$root
+          after_mig_lambda_int[s, q, j, 1] <- x_low
+          
+          # Index of the point on the grid of 
+          # relative Pareto weights (lambda) closest to x_low
+          lambda_ind_low <- which.min(abs(x_low - lambda))
+          if (x_low > lambda[lambda_ind_low]) {
+            lambda_ind_low <- lambda_ind_low + 1
+          }
+          after_mig_lambda[s, q, j, 1:lambda_ind_low] <- x_low
+          
+          # Value functions of HH 2 under the relative Pareto weights x
+          # (I use interpolation since x_low might not be on the grid q)
+          V2_x <- apply(
+            V2_before_mig, 1, 
+            function(y) approxfun(lambda, y, rule = 2)(x_low)
+            )
+          
+          # Calculate consumption at a relative Pareto weight x_low
+          cons1_x_low <- total_mig_inc[s,q,j] / (1 + x_low^(- 1 / sig))
+          cons2_x_low <- total_mig_inc[s,q,j] - cons1_x_low
+          
+          cons1_lc[s, q, j, 1:lambda_ind_low] <- cons1_x_low
+          cons2_lc[s, q, j, 1:lambda_ind_low] <- cons2_x_low
+          V1_after_mig[s, q, j, 1:lambda_ind_low] <- Omega1_after_mig[s, q, j]
+          V2_after_mig[s, q, j, 1:lambda_ind_low] <- util(cons2_x_low, sig) - 
+            mig_dec_mat[j, 2] * d + beta * vil_R[s,] %*% V2_x
+        } else if (calc_diff_val_aut_1(lambda_max) <= 0) {
+          # print(c(s, q, j))
+          V1_after_mig[s, q, j,] <- Omega1_after_mig[s, q, j]
+          V2_after_mig[s, q, j,] <- Omega2_after_mig[s, q, j]
+          after_mig_lambda_int[s, q, j, 1]  <- lambda_max
+          after_mig_lambda[s, q, j,] <- lambda_max
+          lambda_ind_low <- g + 2
+        } else if (calc_diff_val_aut_1(lambda_min) >= 0) {
+          after_mig_lambda_int[s, q, j, 1] <- lambda_min
+          after_mig_lambda[s, q, j,] <- lambda_min
+          lambda_ind_low <- 0
+        }
+      
+        # If the relative Pareto weight is too high and violates the PC, then
+        # set the relative Pareto weight to the upper bound of the interval, and
+        # HH2 gets the value under autarky.
+        if (lambda_ind_low <= (g + 1)) {
+          if (
+            (calc_diff_val_aut_2(lambda_min) > 0) && 
+            (calc_diff_val_aut_2(lambda_max) < 0)
+            ) {
+            
+            x_high <- uniroot(
+              calc_diff_val_aut_2, c(lambda_min, lambda_max), 
+              tol = 1e-10, maxiter = 1000
+              )$root
+            after_mig_lambda_int[s, q, j, 2] <- x_high
+            
+            # Index of the point on the grid of 
+            # relative Pareto weights (lambda) closest to x_high
+            lambda_ind_high <- which.min(abs(x_high - lambda))
+            if (x_high > lambda[lambda_ind_high]) {
+              lambda_ind_high <- lambda_ind_high + 1
+            }
+            after_mig_lambda[s, q, j, lambda_ind_high:(g + 1)] <- x_high
+            
+            # Value functions of HH 2 under the relative Pareto weights x
+            # (I use interpolation since x_high might not be on the grid q)
+            V1_x <- apply(
+              V1_before_mig, 1, 
+              function(y) approxfun(lambda, y, rule = 2)(x_high)
+              )
+            
+            # Calculate consumption of HH 1 at a relative Pareto weight x_high
+            cons1_x_high <- total_mig_inc[s, q, j] / (1 + x_high^(- 1 / sig))
+            cons2_x_high <- total_mig_inc[s, q, j] - cons1_x_high
+            
+            cons1_lc[s, q, j, lambda_ind_high:(g + 1)] <- cons1_x_high
+            cons2_lc[s, q, j, lambda_ind_high:(g + 1)] <- cons2_x_high
+            V1_after_mig[s, q, j, lambda_ind_high:(g + 1)] <- util(cons1_x_high, sig) - 
+              mig_dec_mat[j, 1] * d + beta * vil_R[s,] %*% V1_x
+            V2_after_mig[s, q, j, lambda_ind_high:(g + 1)] <- Omega2_after_mig[s, q, j]
+          } else if (calc_diff_val_aut_2(lambda_min) <= 0) {
+            V1_after_mig[s, q, j,] <- Omega1_after_mig[s, q, j]
+            V2_after_mig[s, q, j,] <- Omega2_after_mig[s, q, j]
+            after_mig_lambda_int[s, q, j, 2] <- lambda_min
+            after_mig_lambda[s, q, j,] <- lambda_min
+            lambda_ind_high <- 0
+          } else if (calc_diff_val_aut_2(lambda_max) >= 0) {
+            after_mig_lambda_int[s, q, j, 2] <- lambda_max
+            after_mig_lambda[s, q, j,] <- lambda_max
+            lambda_ind_high <- g + 2
+          }
+        }
+      }
+    }
   }
-  total_util_mat[,,j] <- total_util_mat[,,j] - sum(mig_dec_mat[j,]) * d
-  util1_mat[,,j] <- util1_mat[,,j] - sum(mig_dec_mat[j,1]) * d
-  util2_mat[,,j] <- util2_mat[,,j] - sum(mig_dec_mat[j,2]) * d
+  
+  
+  # Value functions before migration at grid point (s, lambda) =================
+  # expected value functions at each migration decision
+  exp_V1_mig <- array(NA, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
+  exp_V2_mig <- array(NA, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
+  for (s in 1:vil_S) {
+    for (l in 1:(g + 1)) {
+      exp_V1_mig[s, l, ] <- mig_R %*% V1_after_mig[s,,,l]
+      exp_V2_mig[s, l, ] <- mig_R %*% V2_after_mig[s,,,l]
+    }
+  }
+  exp_V_mig <- exp_V1_mig + exp_V2_mig
+  
+  # smoothed migration vector at grid points (s, lambda, j)
+  smoothed_mig_dec <- array(NA, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
+  scaled_exp_V_mig <- array(NA, dim = c(vil_S, (g + 1), nrow(mig_dec_mat)))
+  max_exp_V_mig <- apply(exp_V_mig, c(1, 2), max)
+  for (j in 1:nrow(mig_dec_mat)) {
+    scaled_exp_V_mig[,,j] <- exp_V_mig[,,j] - max_exp_V_mig
+  }
+  for (j in 1:nrow(mig_dec_mat)) {
+    smoothed_mig_dec[,,j] <- (exp((exp_V_mig[,,j] - max_exp_V_mig) / kappa)) / 
+      apply(exp((scaled_exp_V_mig) / kappa), c(1, 2), sum)
+  }
+  
+  # before-migration value functions (before checking the enforceability)
+  V1_before_mig_new <- apply(smoothed_mig_dec * exp_V1_mig, c(1, 2), sum)
+  V2_before_mig_new <- apply(smoothed_mig_dec * exp_V2_mig, c(1, 2), sum)
+  
+  # find the before-migration intervals
+  for (s in 1:vil_S) {
+    # Function to calculate the difference between 
+    # the before-migration value when the relative Pareto weight is x
+    # and the before-migration autarky value for HH1
+    calc_diff_val_aut_1 <- function(x) {
+      # Value functions of HH 1 under the relative Pareto weights x
+      # (I use interpolation since x might not be on the grid lambda)
+      V1_x <- approxfun(lambda, V1_before_mig[s,], rule = 2)(x)
+      
+      # difference between before-migration value function under x and 
+      # before-migration autarky value
+      diff <- V1_x - Omega1_before_mig[s]
+      return(diff)
+    }
+    
+    # Function to calculate the difference between 
+    # the before-migration value when the relative Pareto weight is x
+    # and the before-migration autarky value for HH2
+    calc_diff_val_aut_2 <- function(x) {
+      # Value functions of HH 2 under the relative Pareto weights x
+      # (I use interpolation since x might not be on the grid lambda)
+      V2_x <- approxfun(lambda, V2_before_mig[s,], rule = 2)(x)
+      
+      # difference between before-migration value function under x and 
+      # before-migration autarky value
+      diff <- V2_x - Omega2_before_mig[s]
+      return(diff)
+    }
+    
+    # print(c(calc_diff_val_aut_1(lambda_min), calc_diff_val_aut_1(lambda_max)))
+    # print(c(calc_diff_val_aut_2(lambda_min), calc_diff_val_aut_2(lambda_max)))
+    
+    # If the relative Pareto weight is too low and violates the PC, then
+    # set the relative Pareto weight to the lower bound of the interval, and
+    # HH1 gets the value under autarky.
+    if (
+      (calc_diff_val_aut_1(lambda_max) > 0) && 
+      (calc_diff_val_aut_1(lambda_min) < 0)
+      ) {
+      
+      x_low <- uniroot(
+        calc_diff_val_aut_1, c(lambda_min, lambda_max), 
+        tol = 1e-10, maxiter = 1000
+        )$root
+      before_mig_lambda_int[s, 1] <- x_low
+      
+      # Index of the point on the grid of 
+      # relative Pareto weights (lambda) closest to x_low
+      lambda_ind_low <- which.min(abs(x_low - lambda))
+      if (x_low > lambda[lambda_ind_low]) {
+        lambda_ind_low <- lambda_ind_low + 1
+      }
+      before_mig_lambda[s, 1:lambda_ind_low] <- x_low
+      
+      # Value functions of HH 2 under the relative Pareto weights x_low
+      exp_V2_x <- mig_R %*% V2_after_mig[s,,,lambda_ind_low]
+      V2_x <- sum(smoothed_mig_dec[s,lambda_ind_low,] * exp_V2_x)
+      
+      V1_before_mig_new[s, 1:lambda_ind_low] <- Omega1_before_mig[s]
+      V2_before_mig_new[s, 1:lambda_ind_low] <- V2_x
+    } else if (calc_diff_val_aut_1(lambda_max) <= 0) {
+      # print("calc_diff_val_aut_1(lambda_max) <= 0")
+      V1_before_mig_new[s,] <- Omega1_before_mig[s]
+      V2_before_mig_new[s,] <- Omega2_before_mig[s]
+      before_mig_lambda_int[s, 1]  <- lambda_max
+      before_mig_lambda[s,] <- lambda_max
+      lambda_ind_low <- g + 2
+    } else if (calc_diff_val_aut_1(lambda_min) >= 0) {
+      # print("calc_diff_val_aut_1(lambda_min) >= 0")
+      before_mig_lambda_int[s, 1] <- lambda_min
+      before_mig_lambda[s,] <- lambda_min
+      lambda_ind_low <- 0
+    }
+  
+    # If the relative Pareto weight is too high and violates the PC, then
+    # set the relative Pareto weight to the upper bound of the interval, and
+    # HH2 gets the value under autarky.
+    if (lambda_ind_low <= (g + 1)) {
+      if (
+        (calc_diff_val_aut_2(lambda_min) > 0) && 
+        (calc_diff_val_aut_2(lambda_max) < 0)
+        ) {
+        
+        x_high <- uniroot(
+          calc_diff_val_aut_2, c(lambda_min, lambda_max), 
+          tol = 1e-10, maxiter = 1000
+          )$root
+        before_mig_lambda_int[s, 2] <- x_high
+        
+        # Index of the point on the grid of 
+        # relative Pareto weights (lambda) closest to x_high
+        lambda_ind_high <- which.min(abs(x_high - lambda))
+        if (x_high > lambda[lambda_ind_high]) {
+          lambda_ind_high <- lambda_ind_high + 1
+        }
+        before_mig_lambda[s, lambda_ind_high:(g + 1)] <- x_high
+        
+        # Value functions of HH 2 under the relative Pareto weights x
+        # (I use interpolation since x_high might not be on the grid q)
+        exp_V1_x <- mig_R %*% V1_after_mig[s,,,lambda_ind_high]
+        V1_x <- sum(smoothed_mig_dec[s,lambda_ind_high,] * exp_V1_x)
+        
+        V1_before_mig_new[s, lambda_ind_high:(g + 1)] <- V1_x
+        V2_before_mig_new[s, lambda_ind_high:(g + 1)] <- Omega2_before_mig[s]
+      } else if (calc_diff_val_aut_2(lambda_min) <= 0) {
+        # print("calc_diff_val_aut_2(lambda_min) <= 0")
+        V1_before_mig_new[s,] <- Omega1_before_mig[s]
+        V2_before_mig_new[s,] <- Omega2_before_mig[s]
+        before_mig_lambda_int[s, 2] <- lambda_min
+        before_mig_lambda[s,] <- lambda_min
+        lambda_ind_high <- 0
+      } else if (calc_diff_val_aut_2(lambda_max) >= 0) {
+        # print("calc_diff_val_aut_2(lambda_max) >= 0")
+        before_mig_lambda_int[s, 2] <- lambda_max
+        before_mig_lambda[s,] <- lambda_max
+        lambda_ind_high <- g + 2
+      }
+    }
+  }
+  
+  return(
+    list(
+      V1_before_mig_new, V2_before_mig_new, 
+      before_mig_lambda_int, after_mig_lambda_int
+      )
+    )
+  
+  }
+
+
+V1_before_mig <- pmax(V1_full, outer(Omega1_before_mig, rep(1, (g + 1))))
+V2_before_mig <- pmax(V2_full, outer(Omega2_before_mig, rep(1, (g + 1))))
+# V1_before_mig <- V1_full
+# V2_before_mig <- V2_full
+# V1_before_mig <- V1_full_mig
+# V2_before_mig <- V2_full_mig
+
+i <- 1
+diff <- 1
+while ((diff > 1e-5) & (i <= 500)) {
+  
+  update_output <- V_before_mig_update_func(
+    V1_before_mig, V2_before_mig,
+    vil_inc1, vil_P1, vil_inc2, vil_P2, vil_R, vil_inc_mat, vil_S,
+    mig_inc1, mig_P1, mig_inc2, mig_P2, mig_R, mig_inc_mat, mig_S, mig_dec_mat,
+    beta, sig, d,
+    util, util_prime, Omega_before_mig,
+    con1_lc, con2_lc, V1_after_mig, V2_after_mig,
+    after_mig_lambda_int, after_mig_lambda, before_mig_lambda_int, before_mig_lambda
+  )
+  
+  diff <- max(abs(V1_before_mig - update_output[[1]]), abs(V2_before_mig - update_output[[2]]))
+  
+  V1_before_mig <- update_output[[1]]
+  V2_before_mig <- update_output[[2]]
+  
+  i <- i + 1
+  
+  if (i %% 10 == 0) {
+    print(diff)
+    print(update_output[[3]])
+  }
 }
 
 
-
+update_output[[3]]
 
 ```
 
