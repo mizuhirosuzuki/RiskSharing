@@ -220,7 +220,6 @@ This paper (i) proposes a test of homogeneous preferences under full insurance, 
 Here only risk preferences are considered due to the relatively small data, although the authors state that it is easy to incorporate time-preference heterogeneity in the model and the tests.
 
 
-
 ### @Chiappori2014
 
 ## Other related studies
