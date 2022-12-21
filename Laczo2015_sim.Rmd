@@ -1,0 +1,618 @@
+---
+title: "Simulation of limited commitment model"
+author: "Mizuhiro Suzuki"
+date: "6/4/2022"
+bibliography: risksharing.bib
+output:
+  html_document:
+    toc: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+packages <- c(
+  "tidyverse",
+  "knitr",
+  "nleqslv",
+  "ggrepel",
+  "rootSolve",
+  "BB",
+  "pracma",
+  "latex2exp",
+  "fixest"
+)
+
+pacman::p_load(packages, character.only = TRUE)
+
+#knit: (function(input_file, encoding) {
+#  out_dir <- 'docs';
+#  rmarkdown::render(input = input_file,
+#                   output_format = "html_document",
+#                   encoding = encoding,
+#                   output_dir = out_dir,
+#                   output_file = 'index.html')})
+#output: github_document
+```
+
+
+## Model settings
+
+I simplify the model of @Laczo2015 and consider two households with $2 \times 2$ states.
+The income process are iid:
+
+$$
+  y_1 = [2/3, 4/3],\ y_2 = [2/3, 4/3], \\
+  \pi_1 = [0.1, 0.9],\ \pi_2 = [0.1, 0.9].
+$$
+
+
+```{r}
+# income shocks and their transition probabilities of the household
+inc1 <- c(2/3, 4/3)
+P1 <- matrix(rep(c(0.1, 0.9), 2), nrow = 2, byrow = TRUE)
+
+# income shocks and their transition probabilities of the village
+inc2 <- c(2/3, 4/3)
+P2 <- matrix(rep(c(0.1, 0.9), 2), nrow = 2, byrow = TRUE)
+
+# transition super-matrix of income shocks
+R <- kronecker(P2, P1)
+
+# number of states
+# (number of income states for a household times
+# number of income states for the village)
+S <- length(inc1) * length(inc2)
+
+# Income matrix
+# (col 1: HH income, col 2: village income)
+inc_mat <- as.matrix(expand.grid(inc1, inc2))
+
+# Aggregate income in each state
+inc_ag <- rowSums(inc_mat)
+
+```
+
+I assume the CRRA utility functions:
+
+$$
+  u_i(c_{it}) = \frac{c_{it}^{1 - \sigma_i} - 1}{1 - \sigma_i}.
+$$
+
+```{r}
+# Define utility function
+util <- function(c, sigma) {
+  if (sigma != 1) {
+    output = (c ^ (1 - sigma) - 1) / (1 - sigma)
+  } else if (sigma == 1) {
+    output = log(c)
+  }
+  return(output)
+}
+util_prime <- function(c, sigma) c ^ (- sigma)
+  
+```
+
+## Value of autarky
+
+```{r}
+delta <- 0.90 # time discount factor 
+sigma1 <- 1.0 # coefficient of relative risk aversion of HH1
+sigma2 <- 1.0 # coefficient of relative risk aversion of HH2
+pcphi <- 0.0 # punishment under autarky
+
+Uaut_func <- function(
+  inc1, P1, inc2, P2,
+  delta, sigma1, sigma2, pcphi,
+  util, util_prime
+  ) {
+
+  # Expected utility under autarky for HH
+  U1_aut <- numeric(length = length(inc1))
+  i <- 1
+  diff <- 1
+  while (diff > 1e-12) {
+    U1_aut_new <- util((inc1 * (1 - pcphi)), sigma1) + delta * P1 %*% U1_aut
+    diff <- max(abs(U1_aut_new - U1_aut))
+    U1_aut <- U1_aut_new
+    i <- i + 1
+  }
+
+  # Expected utility under autarky for village
+  U2_aut <- numeric(length = length(inc2))
+  i <- 1
+  diff <- 1
+  while (diff > 1e-12) {
+    U2_aut_new <- util((inc2 * (1 - pcphi)), sigma2) + delta * P2 %*% U2_aut
+    diff <- max(abs(U2_aut_new - U2_aut))
+    U2_aut <- U2_aut_new
+    i <- i + 1
+  }
+
+  # Since in this case the income process are iid, 
+  # values under autarky can be computed in the following way:
+  # U1_out = util((1 - pcphi) * inc1, sigma1) + delta / (1 - delta) * P1 %*% util((1 - pcphi) * inc1, sigma1)
+  # U2_out = util((1 - pcphi) * inc2, sigma2) + delta / (1 - delta) * P2 %*% util((1 - pcphi) * inc2, sigma2)
+  # This way does not work when income processes are autocorrelated, as in the original model of Laczo (2015)
+
+  # Matrix of expected utilities of autarky
+  # (col 1: HH, col 2: village)
+  Uaut <- expand.grid(U1_aut, U2_aut)
+
+  return(Uaut)
+}
+
+Uaut <- Uaut_func(inc1, P1, inc2, P2, delta, sigma1, sigma2, pcphi, util, util_prime)
+
+```
+
+## Grid of relative Pareto weights and consumption on the grid points
+
+
+```{r}
+# (Number of grid points on relative Pareto weight) - 1
+g <- 199
+
+# The grid points of relative Pareto weights
+qmin <- util_prime(max(inc2), sigma2) / util_prime(min(inc1 * (1 - pcphi)), sigma1)
+qmax <- util_prime(min(inc2 * (1 - pcphi)), sigma2) / util_prime(max(inc1), sigma1)
+q <- exp(seq(log(qmin), log(qmax), length.out = (g + 1)))
+
+```
+
+```{r}
+# The grid points of consumption of HH 1
+# Consumption is determined by aggregate income (inc_ag) and
+# relative Pareto weights (q)
+cons1 <- matrix(nrow = S, ncol = (g + 1))
+for (k in 1:S) {
+  for (l in 1:(g + 1)) {
+    if (sigma1 == sigma2) {
+      cons1[k, l] <- inc_ag[k] / (1 + q[l]^(- 1 / sigma1))
+    } else {
+      f = function(w) util_prime((inc_ag[k] - w), sigma2) - q[l] * util_prime(w, sigma1)
+      v = uniroot(f, c(1e-5, (inc_ag[k] - 1e-5)), tol = 1e-8, maxiter = 100)
+      cons1[k, l] <- v$root
+    }
+  }
+}
+
+```
+
+## Values under risk-sharing (full)
+
+```{r}
+
+V_full_func <- function(
+  inc1, P1, inc2, P2, g,
+  R, S, inc_ag, qmin, qmax, q,
+  delta, sigma1, sigma2, pcphi,
+  util, util_prime, Uaut, cons1
+  ) {
+
+  # Value function iterations ================
+  # Initial guess is expected utilities under autarky
+  V1 <- outer(Uaut[, 1], rep(1, (g + 1)))
+  V2 <- outer(Uaut[, 2], rep(1, (g + 1)))
+  V1_new <- matrix(nrow = S, ncol = (g + 1))
+  V2_new <- matrix(nrow = S, ncol = (g + 1))
+
+  # Obtain value functions by value function iterations
+  j <- 1
+  diff <- 1
+  while (diff > 1e-8 & j < 500) {
+    V1_new <- util(cons1, sigma1) + delta * R %*% V1
+    V2_new <- util(inc_ag - cons1, sigma2) + delta * R %*% V2
+    diff <- max(max(abs(V1_new - V1)), max(abs(V2_new - V2)))
+    V1 <- V1_new
+    V2 <- V2_new
+    j <- j + 1
+  }
+
+  V1_full <- V1
+  V2_full <- V2
+
+  return(list(V1_full, V2_full))
+}
+
+V_full <- V_full_func(
+  inc1, P1, inc2, P2, g,
+  R, S, inc_ag, qmin, qmax, q,
+  delta, sigma1, sigma2, pcphi,
+  util, util_prime, Uaut, cons1
+)
+
+V1_full <- V_full[[1]]
+V2_full <- V_full[[2]]
+
+```
+
+## Values under risk-sharing (limited commitment)
+
+```{r}
+
+V_lc_func <- function(
+  inc1, P1, inc2, P2, g,
+  R, S, inc_ag, qmin, qmax, q,
+  delta, sigma1, sigma2, pcphi,
+  util, util_prime, Uaut, cons1, 
+  V1_full, V2_full
+  ) {
+
+  # Value function iterations ================
+  # Initial guess is expected utilities under full risk sharing
+  V1 <- V1_full
+  V2 <- V2_full
+  V1_new <- matrix(nrow = S, ncol = (g + 1))
+  V2_new <- matrix(nrow = S, ncol = (g + 1))
+
+  diff <- 1
+  iter <- 1
+  maxiter <- 1000
+  while ((diff > 1e-12) && (iter <= maxiter)) {
+
+    cons1_lc <- cons1 # consumption of HH 1 under LC
+    x_lc <- outer(rep(1, S), q)
+    x_int <- matrix(nrow = S, ncol = 2) # matrix of bounds of intervals
+  
+    # First, ignore enforceability and just update the value functions
+    # using the values at the previous iteration
+    V1_new <- util(cons1, sigma1) + delta * R %*% V1
+    V2_new <- util(inc_ag - cons1, sigma2) + delta * R %*% V2
+    
+    # Now check enforceability at each state
+    for (k in 1:S) {
+      
+      # This function calculate the difference between the value when the relative Pareto weight is x
+      # and the value of autarky. This comes from the equation (1) in the supplementary material of
+      # Laczo (2015). Used to calculate the lower bound of the interval.
+      calc_diff_val_aut_1 <- function(x) {
+        # Calculate consumption of HH 1 at a relative Pareto weight x
+        if (sigma1 == sigma2) {
+          cons_x <- inc_ag[k] / (1 + x^(- 1 / sigma1))
+        } else {
+          f <- function(w) util_prime(inc_ag[k] - w, sigma2) / util_prime(w, sigma1) - x
+          cons_x <- uniroot(f, c(1e-6, (inc_ag[k] - 1e-6)), tol = 1e-10, maxiter = 300)$root
+        }
+        
+        # Index of the point on the grid of relative Pareto weights (q) closest to x
+        q_ind <- which.min(abs(x - q))
+        if (x > q[q_ind]) {
+          q_ind <- q_ind + 1
+        }
+        
+        # Value functions of HH 1 under the relative Pareto weights x
+        # (I use interpolation since x might not be on the grid q)
+        V1_x <- apply(V1, 1, function(y) approxfun(q, y, rule = 2)(x))
+        
+        # difference between 
+        diff <- util(cons_x, sigma1) + delta * R[k,] %*% V1_x - Uaut[k, 1]
+        return(diff)
+      }
+      
+      # Similarly, this function is used to calculate the upper bound.
+      calc_diff_val_aut_2 <- function(x) {
+        # Calculate consumption of HH 1 at a relative Pareto weight x
+        if (sigma1 == sigma2) {
+          cons_x <- inc_ag[k] / (1 + x^(- 1 / sigma1))
+        } else {
+          f <- function(w) util_prime(inc_ag[k] - w, sigma2) / util_prime(w, sigma1) - x
+          cons_x <- uniroot(f, c(1e-6, (inc_ag[k] - 1e-6)), tol = 1e-10, maxiter = 300)$root
+        }
+        
+        # Index of the point on the grid of relative Pareto weights (q) closest to x
+        q_ind <- which.min(abs(x - q))
+        if (x > q[q_ind]) {
+          q_ind <- q_ind + 1
+        }
+        
+        # Value functions of HH 1 under the relative Pareto weights x
+        # (I use interpolation since x might not be on the grid q)
+        V2_x <- apply(V2, 1, function(y) approxfun(q, y, rule = 2)(x))
+        
+        # difference between 
+        diff <- util(inc_ag[k] - cons_x, sigma2) + delta * R[k,] %*% V2_x - Uaut[k, 2]
+        return(diff)
+      }   
+      
+      # If the relative Pareto weight is too low and violates the PC, then
+      # set the relative Pareto weight to the lower bound of the interval, and
+      # HH1 gets the value under autarky.
+      if ((calc_diff_val_aut_1(qmax) > 0) && calc_diff_val_aut_1(qmin) < 0) {
+        
+        # Derive the relative Pareto weight that satisfies the equation (1)
+        # in the supplementary material of Laczo (2015)
+        x_low <- uniroot(calc_diff_val_aut_1, c(qmin, qmax), tol = 1e-10, maxiter = 300)$root
+        x_int[k, 1] <- x_low
+        
+        # Index of the point on the grid of relative Pareto weights (q) closest to x_low
+        q_ind_low <- which.min(abs(x_low - q))
+        if (x_low > q[q_ind_low]) {
+          q_ind_low <- q_ind_low + 1
+        }
+        x_lc[k, 1:q_ind_low] <- x_low
+        
+        # Value functions of HH 2 under the relative Pareto weights x
+        # (I use interpolation since x_low might not be on the grid q)
+        V2_x <- apply(V2, 1, function(y) approxfun(q, y, rule = 2)(x_low))
+        
+        # Calculate consumption of HH 1 at a relative Pareto weight x_low
+        if (sigma1 == sigma2) {
+          cons_x_low <- inc_ag[k] / (1 + x_low^(- 1 / sigma1))
+        } else {
+          f <- function(w) util_prime(inc_ag[k] - w, sigma2) / util_prime(w, sigma1) - x_low
+          cons_x_low <- uniroot(f, c(1e-6, (inc_ag[k] - 1e-6)), tol = 1e-10, maxiter = 300)$root
+        }
+        
+        cons1_lc[k, 1:q_ind_low] <- cons_x_low
+        V1_new[k, 1:q_ind_low] <- Uaut[k, 1]
+        V2_new[k, 1:q_ind_low] <- util((inc_ag[k] - cons_x_low), sigma2) + delta * R[k,] %*% V2_x
+      } else if (calc_diff_val_aut_1(qmax) <= 0) {
+        V1_new[k,] <- Uaut[k, 1]
+        V2_new[k,] <- Uaut[k, 2]
+        x_int[k, 1] <- qmax
+        x_lc[k,] <- qmax
+        q_ind_low <- g + 2
+      } else if (calc_diff_val_aut_1(qmin) >= 0) {
+        x_int[k, 1] <- qmin
+        q_ind_low <- 0
+      }
+    
+      # If the relative Pareto weight is too high and violates the PC, then
+      # set the relative Pareto weight to the upper bound of the interval, and
+      # HH2 gets the value under autarky.
+      if (q_ind_low <= (g + 1)) {
+        if ((calc_diff_val_aut_2(qmin) > 0) && calc_diff_val_aut_2(qmax) < 0) {
+          
+          # Derive the relative Pareto weight that satisfies the equation (2)
+          # in the supplementary material of Laczo (2015)
+          x_high <- uniroot(calc_diff_val_aut_2, c(qmin, qmax), tol = 1e-10, maxiter = 300)$root
+          x_int[k, 2] <- x_high
+          
+          # Index of the point on the grid of relative Pareto weights (q) closest to x_low
+          q_ind_high <- which.min(abs(x_high - q))
+          if (x_high > q[q_ind_high]) {
+            q_ind_high <- q_ind_high + 1
+          }
+          x_lc[k, q_ind_high:(g + 1)] <- x_high
+          
+          # Value functions of HH 2 under the relative Pareto weights x
+          # (I use interpolation since x_high might not be on the grid q)
+          V1_x <- apply(V1, 1, function(y) approxfun(q, y, rule = 2)(x_high))
+          
+          # Calculate consumption of HH 1 at a relative Pareto weight x_high
+          if (sigma1 == sigma2) {
+            cons_x_high <- inc_ag[k] / (1 + x_high^(- 1 / sigma1))
+          } else {
+            f <- function(w) util_prime(inc_ag[k] - w, sigma2) / util_prime(w, sigma1) - x_high
+            cons_x_high <- uniroot(f, c(1e-6, (inc_ag[k] - 1e-6)), tol = 1e-10, maxiter = 300)$root
+          }
+          
+          cons1_lc[k, q_ind_high:(g + 1)] <- cons_x_high
+          V1_new[k, q_ind_high:(g + 1)] <- util(cons_x_high, sigma1) + delta * R[k,] %*% V1_x
+          V2_new[k, q_ind_high:(g + 1)] <- Uaut[k, 2]
+        } else if (calc_diff_val_aut_2(qmin) <= 0) {
+          V1_new[k,] <- Uaut[k, 1]
+          V2_new[k,] <- Uaut[k, 2]
+          x_int[k, 2] <- qmin
+          x_lc[k,] <- qmin
+          q_ind_high <- 0
+        } else if (calc_diff_val_aut_2(qmax) >= 0) {
+          x_int[k, 2] <- qmax
+          q_ind_high <- g + 2
+        }
+      }
+      
+      # The case where the relative Pareto weight does not violate PC
+      if ((q_ind_low + 1) < (q_ind_high - 1)) {
+        V1_new[k, (q_ind_low + 1):(q_ind_high - 1)] <- 
+          util(cons1[k, (q_ind_low + 1):(q_ind_high - 1)], sigma1) + 
+          delta * R[k,] %*% V1[, (q_ind_low + 1):(q_ind_high - 1)]
+        V2_new[k, (q_ind_low + 1):(q_ind_high - 1)] <- 
+          util(inc_ag[k] - cons1[k, (q_ind_low + 1):(q_ind_high - 1)], sigma2) + 
+          delta * R[k,] %*% V2[, (q_ind_low + 1):(q_ind_high - 1)]
+      }
+      
+    }
+    
+    diff <- max(max(abs(V1_new - V1)), max(abs(V2_new - V2)))
+    V1 <- V1_new
+    V2 <- V2_new
+    iter <- iter + 1
+    
+  }
+
+  if (iter == maxiter) {
+    print("Reached the maximum limit of iterations!")
+  }
+
+  return(list(V1, V2, x_int))
+}
+
+```
+
+```{r, include = FALSE, eval = FALSE}
+
+V_lc <- V_lc_func(
+  inc1, P1, inc2, P2, g,
+  R, S, inc_ag, qmin, qmax, q,
+  delta, sigma1, sigma2, pcphi,
+  util, util_prime, Uaut, cons1, 
+  V1_full, V2_full
+  )
+
+V1_lc <- V_lc[[1]]
+V2_lc <- V_lc[[2]]
+x_int_lc <- V_lc[[3]]
+log(x_int_lc)
+
+```
+
+## Make a pipeline based on the functions defined above
+
+```{r}
+
+V_lc_all_func <- function(
+  inc1, P1, inc2, P2, g,
+  delta, sigma1, sigma2, pcphi,
+  util, util_prime
+  ) {
+
+  # Pre settings ====================
+  # transition super-matrix of income shocks
+  R <- kronecker(P2, P1)
+
+  # number of states
+  # (number of income states for a household times
+  # number of income states for the village)
+  S <- length(inc1) * length(inc2)
+
+  # Aggregate income in each state
+  inc_ag <- rowSums(expand.grid(inc1, inc2))
+
+  # The grid points of relative Pareto weights
+  qmin <- util_prime(max(inc2), sigma2) / util_prime(min(inc1 * (1 - pcphi)), sigma1)
+  qmax <- util_prime(min(inc2 * (1 - pcphi)), sigma2) / util_prime(max(inc1), sigma1)
+  q <- exp(seq(log(qmin), log(qmax), length.out = (g + 1)))
+
+  # The grid points of consumption of HH 1
+  # Consumption is determined by aggregate income (inc_ag) and
+  # relative Pareto weights (q)
+  cons1 <- matrix(nrow = S, ncol = (g + 1))
+  for (k in 1:S) {
+    for (l in 1:(g + 1)) {
+      if (sigma1 == sigma2) {
+        cons1[k, l] <- inc_ag[k] / (1 + q[l]^(- 1 / sigma1))
+      } else {
+        f = function(w) util_prime((inc_ag[k] - w), sigma2) - q[l] * util_prime(w, sigma1)
+        v = uniroot(f, c(1e-5, (inc_ag[k] - 1e-5)), tol = 1e-8, maxiter = 100)
+        cons1[k, l] <- v$root
+      }
+    }
+  }
+
+  # Matrix of expected utilities of autarky
+  # (col 1: HH, col 2: village)
+  Uaut <- Uaut_func(inc1, P1, inc2, P2, delta, sigma1, sigma2, pcphi, util, util_prime)
+
+  # Values under full risk-sharing
+  V_full <- V_full_func(
+    inc1, P1, inc2, P2, g,
+    R, S, inc_ag, qmin, qmax, q,
+    delta, sigma1, sigma2, pcphi,
+    util, util_prime, Uaut, cons1
+  )
+
+  V1_full <- V_full[[1]]
+  V2_full <- V_full[[2]]
+
+  # Values under risk-sharing with dynamic limited commitment
+  V_lc <- V_lc_func(
+    inc1, P1, inc2, P2, g,
+    R, S, inc_ag, qmin, qmax, q,
+    delta, sigma1, sigma2, pcphi,
+    util, util_prime, Uaut, cons1,
+    V1_full, V2_full
+    )
+
+  V1_lc <- V_lc[[1]]
+  V2_lc <- V_lc[[2]]
+  x_int_lc <- V_lc[[3]]
+
+  return(list(V1_full, V2_full, V1_lc, V2_lc, x_int_lc))
+}
+
+```
+
+## Simulation
+
+
+First solve the model:
+
+```{r}
+output <- V_lc_all_func(
+   inc1, P1, inc2, P2, g, 
+   delta, sigma1, sigma2, pcphi, util, util_prime
+)
+
+```
+
+Start from the "fair" Pareto weight:
+
+```{r}
+
+q_start = q[which.min(abs(q - 1.0))]
+
+```
+
+```{r}
+
+N_sim <- 500
+
+income_realization <- rep(0, N_sim)
+
+income_realization[1] <- sample(seq(S), size = 1, prob = R[1,])
+for (i in 2:N_sim) {
+  income_realization[i] <- sample(seq(S), size = 1, prob = R[income_realization[i - 1],])
+}
+
+income_realization <- sample(
+  seq(S),
+  size = N_sim,
+  replace = TRUE,
+  prob = R[1,]
+)
+
+income_realization[1]
+
+q_int <- output[[5]]
+
+q_sim <- rep(0, N_sim + 1)
+q_sim[1] <- q_start
+for (t in seq(N_sim)) {
+  q_int_temp <- q_int[income_realization[t],]
+  if (q_sim[t] < q_int_temp[1]) {
+    q_sim[t + 1] <- q_int_temp[1]
+  } else if (q_sim[t] > q_int_temp[2]) {
+    q_sim[t + 1] <- q_int_temp[2]
+  } else {
+    q_sim[t + 1] <- q_sim[t]
+  }
+}
+
+consumption_realization_lc <- matrix(NA, nrow = N_sim + 1, ncol = 2)
+for (t in 2:(N_sim + 1)) {
+  f <- function(w) util_prime(inc_ag[income_realization[t - 1]] - w, sigma2) / util_prime(w, sigma1) - q_sim[t]
+  consumption_realization_lc[t, 1] <- uniroot(f, c(1e-6, (inc_ag[income_realization[t - 1]] - 1e-6)), tol = 1e-10, maxiter = 300)$r
+  consumption_realization_lc[t, 2] <- inc_ag[income_realization[t - 1]] - consumption_realization_lc[t, 1]
+}
+
+```
+
+```{r}
+
+df_lc <- bind_rows(
+  tibble(
+    income = inc_mat[income_realization, 1],
+    consumption = consumption_realization_lc[2:(N_sim + 1), 1],
+    time = seq(N_sim),
+    id = 1
+  ),
+  tibble(
+    income = inc_mat[income_realization, 2],
+    consumption = consumption_realization_lc[2:(N_sim + 1), 2],
+    time = seq(N_sim),
+    id = 2
+  )
+)
+
+feols(consumption ~ income | id + time, df_lc)
+
+
+
+
+
+
+```
+
+
